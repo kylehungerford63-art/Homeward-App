@@ -73,7 +73,7 @@ app.use("/api", (req, res) => {
 });
 
 /* ============================================
-   2. STATIC FRONTEND
+   2. STATIC FRONTEND (SERVE FRONTEND FILES)
 ============================================ */
 app.use(express.static(path.join(__dirname, "../frontend")));
 
