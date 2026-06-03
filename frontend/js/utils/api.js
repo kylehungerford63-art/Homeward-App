@@ -1,44 +1,23 @@
-// ===============================
-//  API BASE URL (LOCAL + RENDER)
-// ===============================
 const BASE_URL = (() => {
-  // Local development (VS Code + npm start)
   if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
     return "http://localhost:3000";
   }
-
-  // Production (Render backend)
-  return "https://homeward-app.onrender.com";
+  if (/^\d+\.\d+\.\d+\.\d+$/.test(location.hostname)) {
+    return `http://${location.hostname}:3000`;
+  }
+  return `${location.protocol}//${location.hostname}:3000`;
 })();
 
-// ===============================
-//  GET REQUEST
-// ===============================
 export async function get(url) {
-  const target = `${BASE_URL}${url}`;
-
-  try {
-    const res = await fetch(target);
-    const contentType = res.headers.get("content-type") || "";
-    const text = await res.text();
-
-    if (contentType.includes("application/json")) {
-      return JSON.parse(text);
-    }
-
-    console.error("Non-JSON GET response from", target, text);
-    return { success: false, error: "Non-JSON response", raw: text };
-  } catch (err) {
-    console.error("Network error GET", target, err);
-    return { success: false, error: "Network error", detail: String(err) };
-  }
+  const res = await fetch(`${BASE_URL}${url}`);
+  return res.json();
 }
 
-// ===============================
-//  POST REQUEST
-// ===============================
+// frontend/js/utils/api.js (post function)
 export async function post(url, data) {
-  const target = `${BASE_URL}${url}`;
+  const target = url.startsWith("http://") || url.startsWith("https://")
+    ? url
+    : `${BASE_URL}${url}`;
 
   try {
     const res = await fetch(target, {
@@ -51,10 +30,16 @@ export async function post(url, data) {
     const text = await res.text();
 
     if (contentType.includes("application/json")) {
-      return JSON.parse(text);
+      try {
+        return JSON.parse(text);
+      } catch (err) {
+        console.error("Invalid JSON from", target, text);
+        return { success: false, error: "Invalid JSON response", raw: text };
+      }
     }
 
-    console.error("Non-JSON POST response from", target, text);
+    // Non-JSON response (likely HTML). Return as error object for debugging.
+    console.error("Non-JSON response from", target, text);
     return { success: false, error: "Non-JSON response", raw: text };
   } catch (err) {
     console.error("Network error POST", target, err);
