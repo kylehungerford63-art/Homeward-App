@@ -1,0 +1,112 @@
+{
+  "categories": [
+    {
+      "id": "b388be39-50b6-4d8a-85d3-df02ed5f4fcf",
+      "name": "Electricity",
+      "limit": 100,
+      "spent": 98.53,
+      "emoji": "💡"
+    },
+    {
+      "id": "8af44109-a483-4f48-99e0-737958485551",
+      "name": "rent",
+      "limit": 1800,
+      "spent": 1800,
+      "emoji": "🏠"
+    },
+    {
+      "id": "c08e4cc1-0b05-454b-ad5f-b7e0c67f08cd",
+      "name": "Gas",
+      "limit": 750,
+      "spent": 68.98,
+      "emoji": "🚗"
+    },
+    {
+      "id": "0e835960-663c-4226-9646-4f5a1ff68e0c",
+      "name": "Groceries",
+      "limit": 550,
+      "spent": 122.56,
+      "emoji": "🛒"
+    },
+    {
+      "id": "4943f3e2-a976-4c8e-bc7f-6887026a3717",
+      "name": "Family Funding",
+      "limit": 150,
+      "spent": 0,
+      "emoji": "🎁"
+    },
+    {
+      "id": "76d4ac4d-04a0-44a6-841c-6a67a11c7f06",
+      "name": "Internet",
+      "limit": 75,
+      "spent": 0,
+      "emoji": "🙂"
+    },
+    {
+      "id": "99e7d5fc-9014-4727-b507-c84e6e8a5f9f",
+      "emoji": "😌",
+      "name": "Phone",
+      "limit": 40,
+      "spent": 0
+    }
+  ],
+  "envelopes": [
+    {
+      "id": "03a5e239-dc84-4720-94ec-bf29a0312060",
+      "name": "Groceries",
+      "balance": 618.98,
+      "emoji": "🛒"
+    },
+    {
+      "id": "6647e54f-6032-484c-8a69-3b3b94df144a",
+      "name": "Rent",
+      "balance": 1800,
+      "emoji": "🏠"
+    },
+    {
+      "id": "1d2877ec-8dcc-4e0c-ae89-552f03f158ea",
+      "emoji": "💡",
+      "name": "Utilities",
+      "balance": 250
+    }
+  ],
+  "transactions": [
+    {
+      "id": "0fcb97e3-42a1-436b-9525-7aa6860ffc67",
+      "date": "2026-06-05",
+      "name": "Food Lion",
+      "amount": 122.56,
+      "categoryId": "0e835960-663c-4226-9646-4f5a1ff68e0c",
+      "envelopeId": null,
+      "ignored": false
+    },
+    {
+      "id": "395cc5fd-225f-4daa-9363-d7df4410f66c",
+      "date": "2026-06-01",
+      "name": "Dominion Energy",
+      "amount": 98.53,
+      "categoryId": "b388be39-50b6-4d8a-85d3-df02ed5f4fcf",
+      "envelopeId": null,
+      "ignored": false
+    },
+    {
+      "id": "ae84880e-57ba-4b35-a446-07334897f54f",
+      "date": "2026-06-02",
+      "name": "Shell",
+      "amount": 68.98,
+      "categoryId": "c08e4cc1-0b05-454b-ad5f-b7e0c67f08cd",
+      "envelopeId": null,
+      "ignored": false
+    },
+    {
+      "id": "65d7a550-e27e-425f-a467-e19223e5173c",
+      "date": "2026-05-01",
+      "name": "Rent",
+      "amount": 1800,
+      "categoryId": "8af44109-a483-4f48-99e0-737958485551",
+      "envelopeId": null,
+      "ignored": false
+    }
+  ],
+  "mode": "simple"
+}

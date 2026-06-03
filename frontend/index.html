@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Homeward</title>
+
+  <!-- REQUIRED for iPhone scaling -->
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+
+  <!-- Enable full‑screen PWA mode on iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- App icons (optional, but recommended later)
+  <link rel="apple-touch-icon" href="assets/icon.png">
+  -->
+
+  <link rel="stylesheet" href="css/styles.css" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+  <div class="app-shell">
+
+    <div class="header-wrapper">
+
+      <div class="header">
+        <div class="header-left">
+          <div class="header-logo glow-wrap">
+            <img src="assets/icon.png" class="logo-img">
+          </div>
+        </div>
+
+        <div class="header-title">Homeward</div>
+
+        <div class="header-profile">KP</div>
+      </div>
+
+      <nav class="header-nav">
+        <div class="nav-scroll">
+          <span class="nav-item" data-page="dashboard">Dashboard</span>
+          <span class="nav-item" data-page="budget">Budget</span>
+          <span class="nav-item" data-page="transactions">Transactions</span>
+          <span class="nav-item" data-page="goals">House Goal</span>
+          <span class="nav-item" data-page="insights">Insights</span>
+        </div>
+
+        <div class="nav-highlight"></div>
+      </nav>
+
+    </div>
+
+    <div class="app-container"></div>
+
+  </div>
+
+  <!-- JS Modules -->
+  <script type="module" src="js/app.js"></script>
+  <!-- Individual page controllers are imported by js/app.js -->
+
+  <!-- Global backdrop for all sheets -->
+<div id="sheet-backdrop" class="sheet-backdrop hidden"></div>
+
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "appId": "com.kyle.budgetapp",
+  "appName": "my-budget-app",
+  "webDir": "frontend",
+  "ios": {
+    "contentInset": "always",
+    "backgroundColor": "#ffffff",
+    "scrollEnabled": false
+  }
+}
