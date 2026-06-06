@@ -4,13 +4,36 @@ const { readDB, writeDB } = require("../../utils/jsonDB.js");
 const { v4: uuid } = require("uuid");
 
 /* ============================================================
-   GET ALL TRANSACTIONS
+   GET ALL TRANSACTIONS (with category/envelope emoji)
 ============================================================ */
 router.get("/", (req, res) => {
   try {
     const db = readDB();
     if (!db.transactions) db.transactions = [];
-    return res.json(db.transactions);
+    if (!db.categories) db.categories = [];
+    if (!db.envelopes) db.envelopes = [];
+
+    // Build emoji lookup maps
+    const categoryEmojiMap = {};
+    const envelopeEmojiMap = {};
+
+    db.categories.forEach(c => {
+      categoryEmojiMap[c.id] = c.emoji || null;
+    });
+
+    db.envelopes.forEach(e => {
+      envelopeEmojiMap[e.id] = e.emoji || null;
+    });
+
+    // Attach emoji to each transaction
+    const enriched = db.transactions.map(tx => ({
+      ...tx,
+      categoryEmoji: tx.categoryId ? categoryEmojiMap[tx.categoryId] : null,
+      envelopeEmoji: tx.envelopeId ? envelopeEmojiMap[tx.envelopeId] : null
+    }));
+
+    return res.json(enriched);
+
   } catch (err) {
     console.error("[transactions] GET / error:", err && err.stack ? err.stack : err);
     return res.status(500).json({ error: "Server error reading transactions" });
