@@ -11,6 +11,25 @@ export function initTransactions() {
 }
 
 /* ============================================================
+   DATE GROUPING
+============================================================ */
+function getGroupLabel(dateStr) {
+  const today = new Date();
+  const d = new Date(dateStr + "T00:00");
+
+  const isToday = d.toDateString() === today.toDateString();
+
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  const isYesterday = d.toDateString() === yesterday.toDateString();
+
+  if (isToday) return "Today";
+  if (isYesterday) return "Yesterday";
+
+  return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+}
+
+/* ============================================================
    LOAD TRANSACTIONS
 ============================================================ */
 async function loadTransactions(list) {
@@ -44,67 +63,81 @@ async function loadTransactions(list) {
   // Store globally for editing
   window.currentTransactions = transactions;
 
-  // Build emoji lookup maps (from categories/envelopes loaded earlier)
-  const catMap = window.categoryEmojiMap || {};
-  const envMap = window.envelopeEmojiMap || {};
-
   // Helper: choose emoji
   function getTxEmoji(tx) {
     return tx.categoryEmoji || tx.envelopeEmoji || "❓";
   }
 
-  list.innerHTML = transactions
-    .map(tx => {
-      const amount = Number(tx.amount).toFixed(2);
+  /* Build grouped HTML */
+  let html = "";
+  let lastGroup = "";
 
-      // Fix: avoid UTC shift (June 3 → June 2)
-      const formattedDate = new Date(tx.date + "T00:00").toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric"
-      });
+  transactions.forEach(tx => {
+    const group = getGroupLabel(tx.date);
+    if (group !== lastGroup) {
+      html += `<div class="tx-group">${group}</div>`;
+      lastGroup = group;
+    }
 
-      return `
-        <div class="tx-card" data-id="${tx.id}">
-          
-          <div class="tx-card-left">
-            <div class="tx-card-name">
+    const amount = Number(tx.amount).toFixed(2);
+
+    const formattedDate = new Date(tx.date + "T00:00").toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric"
+    });
+
+    html += `
+      <div class="tx-card swipeable" data-id="${tx.id}">
+        
+        <div class="tx-card-content">
+
+          <div class="tx-left">
+            <div class="tx-name-row">
               <span class="tx-emoji">${getTxEmoji(tx)}</span>
-              ${escapeHtml(tx.name)}
+              <span class="tx-name">${escapeHtml(tx.name)}</span>
             </div>
-            <div class="tx-card-date">${formattedDate}</div>
+            <div class="tx-date">${formattedDate}</div>
           </div>
 
-          <div class="tx-card-actions">
-            <button class="tx-edit" title="Edit">✏️</button>
-            <button class="tx-ignore" title="Ignore">🚫</button>
-            <button class="tx-delete" title="Delete">🗑️</button>
+          <div class="tx-right">
+            <div class="tx-amount">$${amount}</div>
+
+            <div class="tx-actions">
+              <button class="tx-edit" title="Edit">✏️</button>
+              <button class="tx-ignore" title="Ignore">🚫</button>
+              <button class="tx-delete" title="Delete">🗑️</button>
+            </div>
           </div>
 
-          <div class="tx-card-amount">$${amount}</div>
         </div>
-      `;
-    })
-    .join("");
 
-  // Mark ignored cards visually
+        <div class="tx-swipe-delete">Delete</div>
+
+      </div>
+    `;
+  });
+
+  list.innerHTML = html;
+
+  /* Mark ignored cards visually */
   list.querySelectorAll(".tx-card").forEach(card => {
     const id = card.dataset.id;
     const tx = window.currentTransactions.find(t => t.id === id);
     if (tx?.ignored) card.classList.add("ignored");
   });
 
-  // DELETE
+  /* DELETE */
   list.querySelectorAll(".tx-delete").forEach(btn => {
     btn.addEventListener("click", async e => {
       e.stopPropagation();
       const id = btn.closest(".tx-card").dataset.id;
       await deleteTransaction(id);
       loadTransactions(list);
-      if (window.refreshBudgetSummary) window.refreshBudgetSummary();
+      window.refreshBudgetSummary?.();
     });
   });
 
-  // EDIT
+  /* EDIT */
   list.querySelectorAll(".tx-edit").forEach(btn => {
     btn.addEventListener("click", async e => {
       e.stopPropagation();
@@ -113,12 +146,63 @@ async function loadTransactions(list) {
     });
   });
 
-  // IGNORE (one‑click ignore)
+  /* IGNORE */
   list.querySelectorAll(".tx-ignore").forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
       const id = btn.closest(".tx-card").dataset.id;
       ignoreTransaction(id);
+    });
+  });
+
+  /* TAP ANYWHERE TO EDIT */
+  list.querySelectorAll(".tx-card-content").forEach(card => {
+    card.addEventListener("click", e => {
+      if (e.target.closest(".tx-actions")) return;
+      const id = card.closest(".tx-card").dataset.id;
+      openEditTransaction(id);
+    });
+  });
+
+  /* SWIPE‑TO‑DELETE */
+  list.querySelectorAll(".swipeable").forEach(card => {
+    let startX = 0;
+    let currentX = 0;
+    let swiping = false;
+
+    const content = card.querySelector(".tx-card-content");
+
+    card.addEventListener("touchstart", e => {
+      startX = e.touches[0].clientX;
+      swiping = true;
+    });
+
+    card.addEventListener("touchmove", e => {
+      if (!swiping) return;
+      currentX = e.touches[0].clientX - startX;
+
+      if (currentX < 0) {
+        content.style.transform = `translateX(${currentX}px)`;
+      }
+    });
+
+    card.addEventListener("touchend", () => {
+      swiping = false;
+
+      if (currentX < -60) {
+        content.style.transform = "translateX(-80px)";
+      } else {
+        content.style.transform = "";
+      }
+    });
+  });
+
+  /* SWIPE DELETE BUTTON */
+  list.querySelectorAll(".tx-swipe-delete").forEach(btn => {
+    btn.addEventListener("click", async e => {
+      const id = btn.closest(".tx-card").dataset.id;
+      await deleteTransaction(id);
+      loadTransactions(list);
     });
   });
 }
@@ -131,7 +215,7 @@ async function deleteTransaction(id) {
 }
 
 /* ============================================================
-   EDIT TRANSACTION (prefill + PUT)
+   EDIT TRANSACTION
 ============================================================ */
 async function openEditTransaction(id) {
   const tx = window.currentTransactions?.find(t => t.id === id);
@@ -140,10 +224,8 @@ async function openEditTransaction(id) {
     return;
   }
 
-  // mark we are editing this one
   editingTransactionId = id;
 
-  // always load categories/envelopes before showing sheet
   try {
     await loadTargets();
   } catch (err) {
@@ -156,9 +238,12 @@ async function openEditTransaction(id) {
   document.getElementById("tx-amount").value = tx.amount;
   document.getElementById("tx-date").value = tx.date;
   document.getElementById("tx-target").value = tx.categoryId || tx.envelopeId || "";
+
   const switchBtn = document.getElementById("tx-ignore-switch");
-switchBtn.dataset.state = tx.ignored ? "on" : "off";
-switchBtn.textContent = tx.ignored ? "On" : "Off";
+  if (switchBtn) {
+    switchBtn.dataset.state = tx.ignored ? "on" : "off";
+    switchBtn.textContent = tx.ignored ? "On" : "Off";
+  }
 
   openSheet(
     document.getElementById("transaction-sheet"),
@@ -167,13 +252,12 @@ switchBtn.textContent = tx.ignored ? "On" : "Off";
 }
 
 /* ============================================================
-   IGNORE TRANSACTION (one‑click)
+   IGNORE TRANSACTION
 ============================================================ */
 async function ignoreTransaction(id) {
   const tx = window.currentTransactions?.find(t => t.id === id);
   if (!tx) return;
 
-  // toggle
   const newIgnored = !tx.ignored;
 
   const body = {
@@ -196,17 +280,14 @@ async function ignoreTransaction(id) {
     return;
   }
 
-  // Update in-memory
   tx.ignored = newIgnored;
 
-  // Update UI immediately
   const card = document.querySelector(`.tx-card[data-id="${id}"]`);
   if (card) {
     if (newIgnored) card.classList.add("ignored");
     else card.classList.remove("ignored");
   }
 
-  // Refresh budget
   window.refreshBudgetSummary?.();
 }
 
@@ -226,7 +307,6 @@ function setupTransactionSheet(list) {
     return;
   }
 
-  // Only wire the switch if it exists
   if (switchBtn) {
     switchBtn.onclick = () => {
       const newState = switchBtn.dataset.state === "off" ? "on" : "off";
@@ -235,7 +315,6 @@ function setupTransactionSheet(list) {
     };
   }
 
-  // ADD TRANSACTION
   btn.addEventListener("click", async e => {
     e.preventDefault();
     e.stopPropagation();
@@ -258,11 +337,10 @@ function setupTransactionSheet(list) {
       openSheet(sheet, backdrop);
     } catch (err) {
       console.error("Cannot open transaction sheet:", err);
-      alert("Unable to open transaction form. See console for details.");
+      alert("Unable to open transaction form.");
     }
   });
 
-  // CANCEL
   cancelBtn.addEventListener("click", e => {
     e.preventDefault();
     e.stopPropagation();
@@ -270,7 +348,6 @@ function setupTransactionSheet(list) {
     closeSheet(sheet, backdrop);
   });
 
-  // BACKDROP CLOSE
   backdrop.addEventListener("click", e => {
     if (e.target === backdrop) {
       editingTransactionId = null;
@@ -278,7 +355,6 @@ function setupTransactionSheet(list) {
     }
   });
 
-  // SAVE (ADD or EDIT)
   saveBtn.addEventListener("click", async e => {
     e.preventDefault();
     e.stopPropagation();
@@ -361,7 +437,6 @@ function setupTransactionSheet(list) {
     editingTransactionId = null;
     closeSheet(sheet, backdrop);
 
-    // Clear form
     document.getElementById("tx-name").value = "";
     document.getElementById("tx-amount").value = "";
     document.getElementById("tx-date").value = "";
@@ -371,85 +446,13 @@ function setupTransactionSheet(list) {
       switchBtn.textContent = "Off";
     }
 
-    // Reload transactions
     loadTransactions(list);
-
-    // Refresh budget summary if budget page has registered it
-    if (window.refreshBudgetSummary) {
-      window.refreshBudgetSummary();
-    }
+    window.refreshBudgetSummary?.();
   });
 }
 
-
 /* ============================================================
-   LOAD CATEGORY/ENVELOPE OPTIONS
-============================================================ */
-async function loadTargets() {
-  const select = document.getElementById("tx-target");
-  if (!select) return;
-
-  select.innerHTML = '<option value="">Select a category...</option>';
-
-  // 1. Load budget mode
-  let mode = "simple";
-  try {
-    const modeRes = await fetch("/api/budget/mode");
-    const ct = modeRes.headers.get("content-type") || "";
-    if (!ct.includes("application/json")) {
-      const txt = await modeRes.text();
-      throw new Error("Unexpected mode response: " + txt.slice(0, 200));
-    }
-    ({ mode } = await modeRes.json());
-  } catch (err) {
-    console.error("Failed to read budget mode", err);
-    throw err;
-  }
-
-  // 2. Load full summary (categories + envelopes)
-  const res = await fetch("/api/budget/summary");
-  const ct2 = res.headers.get("content-type") || "";
-  if (!ct2.includes("application/json")) {
-    const txt = await res.text();
-    throw new Error("Invalid summary response: " + txt.slice(0, 300));
-  }
-  const data = await res.json();
-
-  const categories = data.categories || [];
-  const envelopes = data.envelopes || [];
-
-  // 3. Build emoji lookup maps for transactions
-  window.categoryEmojiMap = {};
-  window.envelopeEmojiMap = {};
-
-  categories.forEach(c => {
-    window.categoryEmojiMap[c.id] = c.emoji;
-  });
-
-  envelopes.forEach(e => {
-    window.envelopeEmojiMap[e.id] = e.emoji;
-  });
-
-  // 4. Populate dropdown based on mode
-  if (mode === "simple") {
-    categories.forEach(i => {
-      const opt = document.createElement("option");
-      opt.value = i.id;
-      opt.textContent = `${i.emoji || ""} ${i.name}`;
-      select.appendChild(opt);
-    });
-  } else {
-    envelopes.forEach(i => {
-      const opt = document.createElement("option");
-      opt.value = i.id;
-      opt.textContent = `${i.emoji || ""} ${i.name}`;
-      select.appendChild(opt);
-    });
-  }
-}
-
-/* ============================================================
-   SHEET HELPERS (Transactions)
+   SHEET HELPERS
 ============================================================ */
 function openSheet(sheet, backdrop) {
   if (!sheet || !backdrop) return;
