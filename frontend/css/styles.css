@@ -1637,23 +1637,6 @@ canvas#goalTimelineChart { width: 100% !important; height: 100% !important; disp
   border-radius: 14px;
 }
 
-/* Swipe background */
-.tx-swipe-delete {
-  position: absolute;
-  right: 0;
-  top: 0;
-  bottom: 0;
-  width: 80px;
-  background: #b00020;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 14px;
-  z-index: 1;
-}
-
 /* Foreground card */
 .tx-card-content {
   background: rgba(15, 23, 42, 0.96);
@@ -1760,7 +1743,3 @@ canvas#goalTimelineChart { width: 100% !important; height: 100% !important; disp
   pointer-events: auto;
 }
 
-/* Swipe animation */
-.swipeable .tx-card-content {
-  transition: transform 0.2s ease;
-}
