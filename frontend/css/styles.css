@@ -1629,16 +1629,22 @@ canvas#goalTimelineChart { width: 100% !important; height: 100% !important; disp
   font-weight: 600;
 }
 
-/* Outer card wrapper */
+/* FIX: Make tx-card a neutral wrapper so all cards match width */
 .tx-card {
   position: relative;
-  overflow: hidden;
   margin-bottom: 12px;
   border-radius: 14px;
+
+  /* REMOVE all layout, padding, background, borders */
+  background: none !important;
+  border: none !important;
+  padding: 0 !important;
+  display: block !important;
 }
 
 /* Foreground card */
 .tx-card-content {
+  width: 100%;
   background: rgba(15, 23, 42, 0.96);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255,255,255,0.08);
@@ -1649,6 +1655,10 @@ canvas#goalTimelineChart { width: 100% !important; height: 100% !important; disp
   gap: 12px;
   transition: transform 0.2s ease;
   z-index: 2;
+}
+
+.tx-card {
+  padding: 0 2px;
 }
 
 /* Left side */
