@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="120x120" href="/icons/icon-120.png">
+<link rel="apple-touch-icon" sizes="76x76" href="/icons/icon-76.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#0b5cff">
+
+  <meta charset="UTF-8" />
+  <title>Homeward</title>
+
+  <!-- REQUIRED for iPhone scaling -->
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+
+  <!-- Enable full‑screen PWA mode on iOS -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <!-- App icons (optional, but recommended later)
+  <link rel="apple-touch-icon" href="assets/icon.png">
+  -->
+
+  <link rel="stylesheet" href="css/styles.css" />
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+  <div class="app-shell">
+
+    <div class="header-wrapper">
+
+      <div class="header">
+        <div class="header-left">
+          <div class="header-logo glow-wrap">
+            <img src="assets/icon.png" class="logo-img">
+          </div>
+        </div>
+
+        <div class="header-title">Homeward</div>
+
+        <div class="header-profile">KP</div>
+      </div>
+
+      <nav class="header-nav">
+        <div class="nav-scroll">
+          <span class="nav-item" data-page="dashboard">Dashboard</span>
+          <span class="nav-item" data-page="budget">Budget</span>
+          <span class="nav-item" data-page="transactions">Transactions</span>
+          <span class="nav-item" data-page="goals">House Goal</span>
+          <span class="nav-item" data-page="insights">Insights</span>
+        </div>
+
+        <div class="nav-highlight"></div>
+      </nav>
+
+    </div>
+
+    <div class="app-container"></div>
+
+  </div>
+
+  <!-- JS Modules -->
+  <script type="module" src="js/app.js"></script>
+  <!-- Individual page controllers are imported by js/app.js -->
+
+  <!-- Global backdrop for all sheets -->
+<div id="sheet-backdrop" class="sheet-backdrop hidden"></div>
+
+</body>
+</html>
+
+<!-- iOS home screen -->
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png">
+
+<!-- legacy sizes (optional but harmless) -->
+<link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png">
+<link rel="apple-touch-icon" sizes="120x120" href="/icons/icon-120.png">
+
+<!-- Safari pinned tab (monochrome SVG) -->
+<link rel="mask-icon" href="/icons/icon-mask.svg" color="#0b5cff">
+
+<!-- Web app manifest -->
+<link rel="manifest" href="/manifest.json">
+
+<!-- Make the page behave like an app on iOS -->
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+
+<!-- Theme color for Android / Chrome -->
+<meta name="theme-color" content="#0b5cff">

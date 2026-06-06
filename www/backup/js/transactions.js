@@ -1,6 +1,6 @@
 import { get, post } from "./utils/api.js";
 
-let editingTransactionId = null;
+let editingTransactionId = null; // null = add mode, id = edit mode
 
 export function initTransactions() {
   const list = document.getElementById("transaction-list");
@@ -8,25 +8,6 @@ export function initTransactions() {
 
   loadTransactions(list);
   setupTransactionSheet(list);
-}
-
-/* ============================================================
-   DATE GROUPING
-============================================================ */
-function getGroupLabel(dateStr) {
-  const today = new Date();
-  const d = new Date(dateStr + "T00:00");
-
-  const isToday = d.toDateString() === today.toDateString();
-
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
-  const isYesterday = d.toDateString() === yesterday.toDateString();
-
-  if (isToday) return "Today";
-  if (isYesterday) return "Yesterday";
-
-  return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
 }
 
 /* ============================================================
@@ -42,7 +23,7 @@ async function loadTransactions(list) {
     if (!ct.includes("application/json")) {
       const text = await res.text();
       console.error("Expected JSON from /api/transactions, got:", text.slice(0, 300));
-      list.innerHTML = `<div class="error">Could not load transactions</div>`;
+      list.innerHTML = `<div class="error">Could not load transactions (unexpected response)</div>`;
       return;
     }
     transactions = await res.json();
@@ -63,78 +44,54 @@ async function loadTransactions(list) {
   // Store globally for editing
   window.currentTransactions = transactions;
 
-  function getTxEmoji(tx) {
-    return tx.categoryEmoji || tx.envelopeEmoji || "❓";
-  }
+  list.innerHTML = transactions
+    .map(tx => {
+      const amount = Number(tx.amount).toFixed(2);
 
-  /* Build grouped HTML */
-  let html = "";
-  let lastGroup = "";
+      // Fix: avoid UTC shift (June 3 → June 2)
+      const formattedDate = new Date(tx.date + "T00:00").toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric"
+      });
 
-  transactions.forEach(tx => {
-    const group = getGroupLabel(tx.date);
-    if (group !== lastGroup) {
-      html += `<div class="tx-group">${group}</div>`;
-      lastGroup = group;
-    }
-
-    const amount = Number(tx.amount).toFixed(2);
-
-    const formattedDate = new Date(tx.date + "T00:00").toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric"
-    });
-
-    html += `
-      <div class="tx-card" data-id="${tx.id}">
-        
-        <div class="tx-card-content">
-
-          <div class="tx-left">
-            <div class="tx-name-row">
-              <span class="tx-emoji">${getTxEmoji(tx)}</span>
-              <span class="tx-name">${escapeHtml(tx.name)}</span>
-            </div>
-            <div class="tx-date">${formattedDate}</div>
+      return `
+        <div class="tx-card" data-id="${tx.id}">
+          <div class="tx-card-left">
+            <div class="tx-card-name">${escapeHtml(tx.name)}</div>
+            <div class="tx-card-date">${formattedDate}</div>
           </div>
 
-          <div class="tx-right">
-            <div class="tx-amount">$${amount}</div>
-
-            <div class="tx-actions">
-              <button class="tx-edit" title="Edit">✏️</button>
-              <button class="tx-ignore" title="Ignore">🚫</button>
-              <button class="tx-delete" title="Delete">🗑️</button>
-            </div>
+          <div class="tx-card-actions">
+            <button class="tx-edit" title="Edit">✏️</button>
+            <button class="tx-ignore" title="Ignore">🚫</button>
+            <button class="tx-delete" title="Delete">🗑️</button>
           </div>
 
+          <div class="tx-card-amount">$${amount}</div>
         </div>
+      `;
+    })
+    .join("");
 
-      </div>
-    `;
-  });
-
-  list.innerHTML = html;
-
-  /* Mark ignored cards visually */
+  // Mark ignored cards visually
   list.querySelectorAll(".tx-card").forEach(card => {
     const id = card.dataset.id;
     const tx = window.currentTransactions.find(t => t.id === id);
     if (tx?.ignored) card.classList.add("ignored");
   });
 
-  /* DELETE */
+  // DELETE
   list.querySelectorAll(".tx-delete").forEach(btn => {
     btn.addEventListener("click", async e => {
       e.stopPropagation();
       const id = btn.closest(".tx-card").dataset.id;
       await deleteTransaction(id);
       loadTransactions(list);
-      window.refreshBudgetSummary?.();
+      if (window.refreshBudgetSummary) window.refreshBudgetSummary();
     });
   });
 
-  /* EDIT */
+  // EDIT
   list.querySelectorAll(".tx-edit").forEach(btn => {
     btn.addEventListener("click", async e => {
       e.stopPropagation();
@@ -143,21 +100,12 @@ async function loadTransactions(list) {
     });
   });
 
-  /* IGNORE */
+  // IGNORE (one‑click ignore)
   list.querySelectorAll(".tx-ignore").forEach(btn => {
     btn.addEventListener("click", e => {
       e.stopPropagation();
       const id = btn.closest(".tx-card").dataset.id;
       ignoreTransaction(id);
-    });
-  });
-
-  /* TAP ANYWHERE TO EDIT */
-  list.querySelectorAll(".tx-card-content").forEach(card => {
-    card.addEventListener("click", e => {
-      if (e.target.closest(".tx-actions")) return;
-      const id = card.closest(".tx-card").dataset.id;
-      openEditTransaction(id);
     });
   });
 }
@@ -170,7 +118,7 @@ async function deleteTransaction(id) {
 }
 
 /* ============================================================
-   EDIT TRANSACTION
+   EDIT TRANSACTION (prefill + PUT)
 ============================================================ */
 async function openEditTransaction(id) {
   const tx = window.currentTransactions?.find(t => t.id === id);
@@ -179,8 +127,10 @@ async function openEditTransaction(id) {
     return;
   }
 
+  // mark we are editing this one
   editingTransactionId = id;
 
+  // always load categories/envelopes before showing sheet
   try {
     await loadTargets();
   } catch (err) {
@@ -193,12 +143,9 @@ async function openEditTransaction(id) {
   document.getElementById("tx-amount").value = tx.amount;
   document.getElementById("tx-date").value = tx.date;
   document.getElementById("tx-target").value = tx.categoryId || tx.envelopeId || "";
-
   const switchBtn = document.getElementById("tx-ignore-switch");
-  if (switchBtn) {
-    switchBtn.dataset.state = tx.ignored ? "on" : "off";
-    switchBtn.textContent = tx.ignored ? "On" : "Off";
-  }
+switchBtn.dataset.state = tx.ignored ? "on" : "off";
+switchBtn.textContent = tx.ignored ? "On" : "Off";
 
   openSheet(
     document.getElementById("transaction-sheet"),
@@ -207,12 +154,13 @@ async function openEditTransaction(id) {
 }
 
 /* ============================================================
-   IGNORE TRANSACTION
+   IGNORE TRANSACTION (one‑click)
 ============================================================ */
 async function ignoreTransaction(id) {
   const tx = window.currentTransactions?.find(t => t.id === id);
   if (!tx) return;
 
+  // toggle
   const newIgnored = !tx.ignored;
 
   const body = {
@@ -235,14 +183,17 @@ async function ignoreTransaction(id) {
     return;
   }
 
+  // Update in-memory
   tx.ignored = newIgnored;
 
+  // Update UI immediately
   const card = document.querySelector(`.tx-card[data-id="${id}"]`);
   if (card) {
     if (newIgnored) card.classList.add("ignored");
     else card.classList.remove("ignored");
   }
 
+  // Refresh budget
   window.refreshBudgetSummary?.();
 }
 
@@ -262,6 +213,7 @@ function setupTransactionSheet(list) {
     return;
   }
 
+  // Only wire the switch if it exists
   if (switchBtn) {
     switchBtn.onclick = () => {
       const newState = switchBtn.dataset.state === "off" ? "on" : "off";
@@ -270,6 +222,7 @@ function setupTransactionSheet(list) {
     };
   }
 
+  // ADD TRANSACTION
   btn.addEventListener("click", async e => {
     e.preventDefault();
     e.stopPropagation();
@@ -292,10 +245,11 @@ function setupTransactionSheet(list) {
       openSheet(sheet, backdrop);
     } catch (err) {
       console.error("Cannot open transaction sheet:", err);
-      alert("Unable to open transaction form.");
+      alert("Unable to open transaction form. See console for details.");
     }
   });
 
+  // CANCEL
   cancelBtn.addEventListener("click", e => {
     e.preventDefault();
     e.stopPropagation();
@@ -303,6 +257,7 @@ function setupTransactionSheet(list) {
     closeSheet(sheet, backdrop);
   });
 
+  // BACKDROP CLOSE
   backdrop.addEventListener("click", e => {
     if (e.target === backdrop) {
       editingTransactionId = null;
@@ -310,6 +265,7 @@ function setupTransactionSheet(list) {
     }
   });
 
+  // SAVE (ADD or EDIT)
   saveBtn.addEventListener("click", async e => {
     e.preventDefault();
     e.stopPropagation();
@@ -345,7 +301,7 @@ function setupTransactionSheet(list) {
       const ct = modeRes.headers.get("content-type") || "";
       if (!ct.includes("application/json")) {
         const txt = await modeRes.text();
-        throw new Error("Unexpected mode response");
+        throw new Error("Unexpected mode response: " + txt.slice(0, 200));
       }
       ({ mode } = await modeRes.json());
     } catch (err) {
@@ -361,6 +317,8 @@ function setupTransactionSheet(list) {
     }
 
     try {
+      let result;
+
       if (editingTransactionId) {
         const res = await fetch(`/api/transactions/${editingTransactionId}`, {
           method: "PUT",
@@ -372,11 +330,12 @@ function setupTransactionSheet(list) {
           alert("Update failed");
           return;
         }
+        result = await res.json();
       } else {
-        const result = await post("/api/transactions", body);
+        result = await post("/api/transactions", body);
         if (!result || !result.success) {
           console.error("Transaction save failed", result);
-          alert("Save failed");
+          alert("Save failed: " + (result?.error || "Unknown error"));
           return;
         }
       }
@@ -389,6 +348,7 @@ function setupTransactionSheet(list) {
     editingTransactionId = null;
     closeSheet(sheet, backdrop);
 
+    // Clear form
     document.getElementById("tx-name").value = "";
     document.getElementById("tx-amount").value = "";
     document.getElementById("tx-date").value = "";
@@ -398,15 +358,63 @@ function setupTransactionSheet(list) {
       switchBtn.textContent = "Off";
     }
 
+    // Reload transactions
     loadTransactions(list);
-    window.refreshBudgetSummary?.();
+
+    // Refresh budget summary if budget page has registered it
+    if (window.refreshBudgetSummary) {
+      window.refreshBudgetSummary();
+    }
+  });
+}
+
+
+/* ============================================================
+   LOAD CATEGORY/ENVELOPE OPTIONS
+============================================================ */
+async function loadTargets() {
+  const select = document.getElementById("tx-target");
+  if (!select) return;
+
+  select.innerHTML = '<option value="">Select a category...</option>';
+
+  let mode = "simple";
+  try {
+    const modeRes = await fetch("/api/budget/mode");
+    const ct = modeRes.headers.get("content-type") || "";
+    if (!ct.includes("application/json")) {
+      const txt = await modeRes.text();
+      throw new Error("Unexpected mode response: " + txt.slice(0, 200));
+    }
+    ({ mode } = await modeRes.json());
+  } catch (err) {
+    console.error("Failed to read budget mode", err);
+    throw err;
+  }
+
+  const res = await fetch("/api/budget/summary");
+  const ct2 = res.headers.get("content-type") || "";
+  if (!ct2.includes("application/json")) {
+    const txt = await res.text();
+    throw new Error("Invalid summary response: " + txt.slice(0, 300));
+  }
+  const data = await res.json();
+
+  const items = mode === "simple" ? data.categories : data.envelopes;
+
+  items.forEach(i => {
+    const opt = document.createElement("option");
+    opt.value = i.id;
+    opt.textContent = `${i.emoji || ""} ${i.name}`;
+    select.appendChild(opt);
   });
 }
 
 /* ============================================================
-   SHEET HELPERS
+   SHEET HELPERS (Transactions)
 ============================================================ */
 function openSheet(sheet, backdrop) {
+  if (!sheet || !backdrop) return;
   backdrop.classList.remove("hidden");
   sheet.classList.remove("hidden");
 
@@ -416,6 +424,7 @@ function openSheet(sheet, backdrop) {
 }
 
 function closeSheet(sheet, backdrop) {
+  if (!sheet || !backdrop) return;
   sheet.classList.add("hidden");
   backdrop.classList.add("hidden");
 }
@@ -428,49 +437,3 @@ function escapeHtml(text) {
   div.textContent = text;
   return div.innerHTML;
 }
-
-/* ============================================================
-   LOAD CATEGORY / ENVELOPE OPTIONS
-============================================================ */
-async function loadTargets() {
-  const select = document.getElementById("tx-target");
-  if (!select) return;
-
-  select.innerHTML = '<option value="">Select a category...</option>';
-
-  let mode = "simple";
-
-  // Load mode safely
-  try {
-    const modeRes = await fetch("/api/budget/mode");
-    const data = await modeRes.json();
-    if (data?.mode) mode = data.mode;
-  } catch (err) {
-    console.warn("Budget mode failed, defaulting to simple:", err);
-  }
-
-  // Load summary safely
-  let categories = [];
-  let envelopes = [];
-
-  try {
-    const res = await fetch("/api/budget/summary");
-    const data = await res.json();
-
-    categories = Array.isArray(data.categories) ? data.categories : [];
-    envelopes = Array.isArray(data.envelopes) ? data.envelopes : [];
-  } catch (err) {
-    console.warn("Summary load failed:", err);
-  }
-
-  // Populate dropdown
-  const items = mode === "simple" ? categories : envelopes;
-
-  items.forEach(i => {
-    const opt = document.createElement("option");
-    opt.value = i.id;
-    opt.textContent = `${i.emoji || ""} ${i.name}`;
-    select.appendChild(opt);
-  });
-}
-
