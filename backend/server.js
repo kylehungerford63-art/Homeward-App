@@ -1,16 +1,14 @@
-﻿const express = require('express');
-const path = require('path');
+// backend/server.js
+// Minimal bootstrap: import the Express app from app.js and start the server.
 
-const app = express();
+const app = require('./app');
+
 const PORT = process.env.PORT || 3000;
 
-app.use(express.static(path.join(__dirname, '..', 'www')));
-app.use('/icons', express.static(path.join(__dirname, '..', 'icons')));
+if (require.main === module) {
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server listening on http://localhost:${PORT}`);
+  });
+}
 
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(__dirname, '..', 'www', 'index.html'));
-});
-
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
-});
+module.exports = app;
