@@ -14,7 +14,7 @@ function normalize(db) {
     return {
       id: c.id || uuidv4(),
       name: c.name,
-      limit: Number(c.limit),
+      limit: Number(c.limit || 0),
       spent: Number(c.spent || 0),
       emoji: c.emoji || ""
     };
@@ -34,64 +34,79 @@ function getCategories() {
 
 // CREATE
 router.post("/", (req, res) => {
-  const { name, limit, emoji } = req.body;
-  if (!name || limit == null) return res.status(400).json({ error: "Missing fields" });
+  try {
+    const { name, limit, emoji } = req.body;
+    if (!name || limit == null) return res.status(400).json({ error: "Missing fields" });
 
-  let db = readDB();
-  const normalized = normalize(db);
-  db = normalized.db;
+    let db = readDB();
+    const normalized = normalize(db);
+    db = normalized.db;
 
-  const category = {
-  id: uuidv4(),
-  emoji,          // <-- ADD THIS LINE
-  name,
-  limit: Number(limit),
-  spent: 0
-};
+    const category = {
+      id: uuidv4(),
+      emoji: emoji || "",
+      name,
+      limit: Number(limit),
+      spent: 0
+    };
 
-  db.categories.push(category);
-  writeDB(db);
+    db.categories.push(category);
+    writeDB(db);
 
-  res.json({ success: true, category });
+    return res.json({ success: true, category });
+  } catch (err) {
+    console.error("[budget/category] POST / error:", err && err.stack ? err.stack : err);
+    return res.status(500).json({ error: "Server error creating category" });
+  }
 });
 
 // UPDATE
 router.put("/:id", (req, res) => {
-  const { id } = req.params;
-  const { name, limit, emoji} = req.body;
+  try {
+    const { id } = req.params;
+    const { name, limit, emoji } = req.body;
 
-  let db = readDB();
-  const normalized = normalize(db);
-  db = normalized.db;
-  if (normalized.changed) writeDB(db);
+    let db = readDB();
+    const normalized = normalize(db);
+    db = normalized.db;
+    if (normalized.changed) writeDB(db);
 
-  const idx = db.categories.findIndex(c => c.id === id);
-  if (idx === -1) return res.status(404).json({ error: "Category not found" });
+    const idx = db.categories.findIndex(c => c.id === id);
+    if (idx === -1) return res.status(404).json({ error: "Category not found" });
 
-  if (name !== undefined) db.categories[idx].name = name;
-  if (limit !== undefined) db.categories[idx].limit = Number(limit);
-  if (emoji !== undefined) db.categories[idx].emoji = emoji;
+    if (name !== undefined) db.categories[idx].name = name;
+    if (limit !== undefined) db.categories[idx].limit = Number(limit);
+    if (emoji !== undefined) db.categories[idx].emoji = emoji;
 
-  writeDB(db);
-  res.json({ success: true, category: db.categories[idx] });
+    writeDB(db);
+    return res.json({ success: true, category: db.categories[idx] });
+  } catch (err) {
+    console.error("[budget/category] PUT /:id error:", err && err.stack ? err.stack : err);
+    return res.status(500).json({ error: "Server error updating category" });
+  }
 });
 
 // DELETE
 router.delete("/:id", (req, res) => {
-  const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-  let db = readDB();
-  const normalized = normalize(db);
-  db = normalized.db;
-  if (normalized.changed) writeDB(db);
+    let db = readDB();
+    const normalized = normalize(db);
+    db = normalized.db;
+    if (normalized.changed) writeDB(db);
 
-  const idx = db.categories.findIndex(c => c.id === id);
-  if (idx === -1) return res.status(404).json({ error: "Category not found" });
+    const idx = db.categories.findIndex(c => c.id === id);
+    if (idx === -1) return res.status(404).json({ error: "Category not found" });
 
-  db.categories.splice(idx, 1);
-  writeDB(db);
+    db.categories.splice(idx, 1);
+    writeDB(db);
 
-  res.json({ success: true });
+    return res.json({ success: true });
+  } catch (err) {
+    console.error("[budget/category] DELETE /:id error:", err && err.stack ? err.stack : err);
+    return res.status(500).json({ error: "Server error deleting category" });
+  }
 });
 
 module.exports = { router, getCategories };
