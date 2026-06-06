@@ -1753,3 +1753,16 @@ canvas#goalTimelineChart { width: 100% !important; height: 100% !important; disp
   pointer-events: auto;
 }
 
+/* Fix card stretching too wide */
+.tx-card {
+  width: 100%;
+  max-width: 100%;
+  padding: 0 4px !important;   /* adds side gutters */
+  box-sizing: border-box;
+}
+
+/* Ensure the card respects the container width */
+.tx-card-content {
+  width: 100%;
+  box-sizing: border-box;
+}
