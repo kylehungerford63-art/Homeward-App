@@ -44,9 +44,16 @@
     },
     {
       "id": "99e7d5fc-9014-4727-b507-c84e6e8a5f9f",
-      "emoji": "😌",
       "name": "Phone",
       "limit": 40,
+      "spent": 0,
+      "emoji": "😌"
+    },
+    {
+      "id": "9d96468c-bf64-4f03-b327-7ccda02e3bd4",
+      "emoji": "🧼",
+      "name": "soap",
+      "limit": 55,
       "spent": 0
     }
   ],
