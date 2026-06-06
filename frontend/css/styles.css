@@ -1575,3 +1575,14 @@ canvas#goalTimelineChart { width: 100% !important; height: 100% !important; disp
 /* z-index safety */
 .modal-backdrop { z-index: 1200; }
 .modal-panel { z-index: 1210; }
+
+.emoji-search-input {
+  width: 100%;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  border: 1px solid #444;
+  background: #222;
+  color: white;
+  font-size: 16px;
+}
