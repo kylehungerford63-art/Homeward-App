@@ -1,5 +1,7 @@
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
+
 const app = express();
 
 app.use(cors());
@@ -26,8 +28,12 @@ app.use("/api/budget/summary", require("./api/budget/summary"));
 // TRANSACTIONS
 app.use("/api/transactions", require("./api/transactions/transactions"));
 
-app.get("/", (req, res) => {
-  res.send("Backend is running");
+// Serve frontend (static files from /www)
+app.use(express.static(path.join(__dirname, "../www")));
+
+// SPA fallback: any non-API route returns index.html
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../www/index.html"));
 });
 
 const PORT = process.env.PORT || 3001;
