@@ -1,14 +1,34 @@
-// backend/server.js
-// Minimal bootstrap: import the Express app from app.js and start the server.
+const express = require("express");
+const cors = require("cors");
+const app = express();
 
-const app = require('./app');
+app.use(cors());
+app.use(express.json());
 
-const PORT = process.env.PORT || 3000;
+// AUTH
+app.use("/api/auth", require("./routes/auth"));
 
-if (require.main === module) {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server listening on http://localhost:${PORT}`);
-  });
-}
+// PROFILE
+app.use("/api/profile", require("./routes/profile"));
 
-module.exports = app;
+// GOAL
+app.use("/api/goal", require("./routes/goal"));
+
+// DASHBOARD
+app.use("/api/dashboard", require("./routes/dashboard"));
+
+// BUDGET
+app.use("/api/budget/category", require("./api/budget/addCategory"));
+app.use("/api/budget/envelope", require("./api/budget/addEnvelope"));
+app.use("/api/budget/mode", require("./api/budget/mode"));
+app.use("/api/budget/summary", require("./api/budget/summary"));
+
+// TRANSACTIONS
+app.use("/api/transactions", require("./api/transactions/transactions"));
+
+app.get("/", (req, res) => {
+  res.send("Backend is running");
+});
+
+const PORT = process.env.PORT || 3001;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

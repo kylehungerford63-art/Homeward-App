@@ -1,4 +1,3 @@
-const UserProfile = require('../models/profileModel');
 const profileRepo = require('../db/profileRepository');
 
 exports.getProfile = async (req, res) => {
@@ -7,8 +6,11 @@ exports.getProfile = async (req, res) => {
   let profile = await profileRepo.getProfileByUserId(user_id);
 
   if (!profile) {
-    profile = new UserProfile({ user_id });
-    await profileRepo.createProfile(profile);
+    profile = await profileRepo.createProfile({
+      user_id,
+      bio: null,
+      avatar_url: null
+    });
   }
 
   res.json(profile);

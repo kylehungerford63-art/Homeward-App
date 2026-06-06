@@ -24,11 +24,7 @@ exports.register = async (req, res) => {
       id: uuidv4(),
       name,
       email,
-      password_hash,
-      house_goal_id: null,
-      selected_house_savings_account_id: null,
-      created_at: new Date(),
-      updated_at: new Date()
+      password_hash
     };
 
     await userRepo.createUser(user);

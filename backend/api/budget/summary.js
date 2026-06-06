@@ -1,22 +1,29 @@
 const express = require("express");
 const router = express.Router();
-const { readDB } = require("../../utils/jsonDB.js");
+const requireAuth = require("../../middleware/requireAuth");
+const budgetModeRepo = require("../../db/budgetModeRepository");
+const categoryRepo = require("../../db/categoryRepository");
+const envelopeRepo = require("../../db/envelopeRepository");
 
-router.get("/", (req, res) => {
+router.get("/", requireAuth, async (req, res) => {
   try {
-    const db = readDB();
+    const user_id = req.user.id;
+
+    const mode = await budgetModeRepo.getMode(user_id);
+    const categories = await categoryRepo.getCategoriesByUser(user_id);
+    const envelopes = await envelopeRepo.getEnvelopesByUser(user_id);
 
     const page = {
-      mode: db.mode || "simple",
+      mode,
       month: new Date().toISOString().slice(0, 7),
-      categories: db.categories || [],
-      envelopes: db.envelopes || []
+      categories,
+      envelopes
     };
 
-    return res.json(page);
+    res.json(page);
   } catch (err) {
-    console.error("[budget/summary] GET / error:", err && err.stack ? err.stack : err);
-    return res.status(500).json({ error: "Server error reading budget summary" });
+    console.error("[budget/summary] GET / error:", err);
+    res.status(500).json({ error: "Server error reading budget summary" });
   }
 });
 

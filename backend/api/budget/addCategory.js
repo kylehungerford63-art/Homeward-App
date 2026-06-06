@@ -1,112 +1,63 @@
 const express = require("express");
-const { v4: uuidv4 } = require("uuid");
-const { readDB, writeDB } = require("../../utils/jsonDB.js");
-
 const router = express.Router();
+const requireAuth = require("../../middleware/requireAuth");
+const categoryRepo = require("../../db/categoryRepository");
 
-// Normalize IDs for old DB entries
-function normalize(db) {
-  if (!db.categories) db.categories = [];
-
-  let changed = false;
-  db.categories = db.categories.map(c => {
-    if (!c.id) changed = true;
-    return {
-      id: c.id || uuidv4(),
-      name: c.name,
-      limit: Number(c.limit || 0),
-      spent: Number(c.spent || 0),
-      emoji: c.emoji || ""
-    };
-  });
-
-  return { db, changed };
-}
-
-function getCategories() {
-  let db = readDB();
-  const normalized = normalize(db);
-  if (normalized.changed) {
-    writeDB(normalized.db);
-  }
-  return normalized.db.categories;
-}
-
-// CREATE
-router.post("/", (req, res) => {
+router.post("/", requireAuth, async (req, res) => {
   try {
+    const user_id = req.user.id;
     const { name, limit, emoji } = req.body;
-    if (!name || limit == null) return res.status(400).json({ error: "Missing fields" });
+    if (!name || limit == null) {
+      return res.status(400).json({ error: "Missing fields" });
+    }
 
-    let db = readDB();
-    const normalized = normalize(db);
-    db = normalized.db;
-
-    const category = {
-      id: uuidv4(),
-      emoji: emoji || "",
+    const category = await categoryRepo.createCategory(user_id, {
       name,
-      limit: Number(limit),
-      spent: 0
-    };
+      limit_amount: Number(limit),
+      emoji
+    });
 
-    db.categories.push(category);
-    writeDB(db);
-
-    return res.json({ success: true, category });
+    res.json({ success: true, category });
   } catch (err) {
-    console.error("[budget/category] POST / error:", err && err.stack ? err.stack : err);
-    return res.status(500).json({ error: "Server error creating category" });
+    console.error("[budget/category] POST / error:", err);
+    res.status(500).json({ error: "Server error creating category" });
   }
 });
 
-// UPDATE
-router.put("/:id", (req, res) => {
+router.put("/:id", requireAuth, async (req, res) => {
   try {
+    const user_id = req.user.id;
     const { id } = req.params;
     const { name, limit, emoji } = req.body;
 
-    let db = readDB();
-    const normalized = normalize(db);
-    db = normalized.db;
-    if (normalized.changed) writeDB(db);
+    const updated = await categoryRepo.updateCategory(user_id, id, {
+      name,
+      limit_amount: limit != null ? Number(limit) : undefined,
+      emoji
+    });
 
-    const idx = db.categories.findIndex(c => c.id === id);
-    if (idx === -1) return res.status(404).json({ error: "Category not found" });
+    if (!updated) {
+      return res.status(404).json({ error: "Category not found" });
+    }
 
-    if (name !== undefined) db.categories[idx].name = name;
-    if (limit !== undefined) db.categories[idx].limit = Number(limit);
-    if (emoji !== undefined) db.categories[idx].emoji = emoji;
-
-    writeDB(db);
-    return res.json({ success: true, category: db.categories[idx] });
+    res.json({ success: true, category: updated });
   } catch (err) {
-    console.error("[budget/category] PUT /:id error:", err && err.stack ? err.stack : err);
-    return res.status(500).json({ error: "Server error updating category" });
+    console.error("[budget/category] PUT /:id error:", err);
+    res.status(500).json({ error: "Server error updating category" });
   }
 });
 
-// DELETE
-router.delete("/:id", (req, res) => {
+router.delete("/:id", requireAuth, async (req, res) => {
   try {
+    const user_id = req.user.id;
     const { id } = req.params;
 
-    let db = readDB();
-    const normalized = normalize(db);
-    db = normalized.db;
-    if (normalized.changed) writeDB(db);
-
-    const idx = db.categories.findIndex(c => c.id === id);
-    if (idx === -1) return res.status(404).json({ error: "Category not found" });
-
-    db.categories.splice(idx, 1);
-    writeDB(db);
-
-    return res.json({ success: true });
+    await categoryRepo.deleteCategory(user_id, id);
+    res.json({ success: true });
   } catch (err) {
-    console.error("[budget/category] DELETE /:id error:", err && err.stack ? err.stack : err);
-    return res.status(500).json({ error: "Server error deleting category" });
+    console.error("[budget/category] DELETE /:id error:", err);
+    res.status(500).json({ error: "Server error deleting category" });
   }
 });
 
-module.exports = { router, getCategories };
+module.exports = router;

@@ -1,13 +1,11 @@
-const accounts = [
-  {
-    id: "demo-account-1",
-    name: "My Savings Account",
-    balance: 69000
-  }
-];
+const pool = require("./database");
 
 async function getAccountById(id) {
-  return accounts.find(a => a.id === id) || null;
+  const result = await pool.query(
+    `SELECT * FROM accounts WHERE id = $1 LIMIT 1`,
+    [id]
+  );
+  return result.rows[0] || null;
 }
 
 module.exports = {

@@ -1,6 +1,6 @@
 const profileRepo = require('../db/profileRepository');
-const accountRepo = require('../db/accountRepository'); // we will create this mock next
-const goalRepo = require('../db/goalRepository');       // also created next
+const accountRepo = require('../db/accountRepository');
+const goalRepo = require('../db/goalRepository');
 const { calculateHouseGoalProgress } = require('../engine/houseGoalEngine');
 
 exports.getDashboard = async (req, res) => {
@@ -13,12 +13,14 @@ exports.getDashboard = async (req, res) => {
   }
 
   // 2. Load house goal
-  const goal = await goalRepo.getGoalById(profile.house_goal_id);
+  const goal = profile.house_goal_id
+    ? await goalRepo.getGoalById(profile.house_goal_id)
+    : null;
 
   // 3. Load selected savings account
-  const account = await accountRepo.getAccountById(
-    profile.selected_house_savings_account_id
-  );
+  const account = profile.selected_house_savings_account_id
+    ? await accountRepo.getAccountById(profile.selected_house_savings_account_id)
+    : null;
 
   // 4. Run bucket engine
   const progress = calculateHouseGoalProgress({
