@@ -1,0 +1,81 @@
+<div class="budget-page">
+
+  <div class="budget-header">
+    <h2>Budget</h2>
+
+    <div class="budget-mode-toggle">
+      <label>
+        <input type="radio" name="budget-mode" value="simple" checked>
+        Simple
+      </label>
+
+      <label>
+        <input type="radio" name="budget-mode" value="envelope">
+        Envelope
+      </label>
+    </div>
+  </div>
+
+  <div class="budget-actions stacked-buttons">
+    <button id="add-category-btn" class="budget-fade" type="button">+ Add Category</button>
+    <button id="add-envelope-btn" class="budget-fade" type="button">+ Add Envelope</button>
+  </div>
+
+  <div id="budget-content"></div>
+
+
+  <!-- ========================================================= -->
+  <!-- ⭐ MAIN ADD/EDIT BOTTOM SHEET -->
+  <!-- ========================================================= -->
+  <div id="sheet-modal" class="sheet hidden">
+    <div class="sheet-handle"></div>
+
+    <div class="sheet-content">
+
+      <div class="emoji-row">
+        <button id="emoji-preview" class="emoji-preview">❓</button>
+        <input type="hidden" id="modal-emoji">
+      </div>
+
+      <label>Name</label>
+      <input id="sheet-modal-name" type="text" placeholder="Name">
+
+      <label>Amount</label>
+      <input id="sheet-modal-amount" type="number" placeholder="Amount">
+
+      <div id="preset-buttons" class="preset-buttons"></div>
+
+      <div class="sheet-actions">
+        <button id="sheet-modal-save" type="button">Save</button>
+        <button id="sheet-modal-cancel" type="button">Cancel</button>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ========================================================= -->
+  <!-- ⭐ EMOJI PICKER SHEET -->
+  <!-- ========================================================= -->
+  <div id="emoji-sheet" class="sheet hidden">
+    <div class="sheet-handle"></div>
+
+    <div class="sheet-content">
+
+      <h3>Recommended</h3>
+      <div id="emoji-recommended" class="emoji-grid"></div>
+
+      <button id="emoji-more" class="more-btn">More Emojis…</button>
+
+      <div id="emoji-full" class="emoji-grid hidden"></div>
+
+    </div>
+  </div>
+
+
+  <!-- ========================================================= -->
+  <!-- ⭐ BACKDROP -->
+  <!-- ========================================================= -->
+  <div id="sheet-backdrop" class="backdrop hidden"></div>
+
+</div>

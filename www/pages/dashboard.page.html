@@ -1,0 +1,55 @@
+<div class="page">
+
+  <!-- ============================
+       TOTAL SAVINGS SUMMARY
+  ============================= -->
+  <div class="section card">
+    <h2>Total Savings</h2>
+    <p id="total-savings" class="counter">$0</p>
+  </div>
+
+  <!-- ============================
+       HOUSE GOAL SUMMARY WIDGET
+       (NOT the full engine)
+  ============================= -->
+  <div class="section card">
+    <h2>House Goal Summary</h2>
+
+    <div class="goal-ring-container">
+      <svg class="goal-ring" width="140" height="140">
+        <circle class="ring-bg" cx="70" cy="70" r="60" />
+        <circle class="ring-progress" cx="70" cy="70" r="60" />
+      </svg>
+
+      <div class="goal-ring-text">
+        <span id="goal-percent">0%</span>
+      </div>
+    </div>
+
+    <p class="goal-subtext">
+      Saved: <span id="goal-current">$0</span> / 
+      <span id="goal-target">$0</span>
+    </p>
+  </div>
+
+  <!-- ============================
+       QUICK ACTIONS
+  ============================= -->
+  <div class="section card">
+    <h2>Quick Actions</h2>
+
+    <div class="quick-actions">
+      <button class="quick-btn" onclick="navigateTo('goals')">View House Goal</button>
+      <button class="quick-btn" onclick="navigateTo('budget')">Edit Budget</button>
+      <button class="quick-btn" onclick="navigateTo('transactions')">View Transactions</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function navigateTo(page) {
+    const item = document.querySelector(`.nav-item[data-page="${page}"]`);
+    if (item) item.click();
+  }
+</script>
