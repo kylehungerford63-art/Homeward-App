@@ -1614,3 +1614,16 @@ canvas#goalTimelineChart { width: 100% !important; height: 100% !important; disp
   color: white;
   font-size: 16px;
 }
+
+.tx-emoji {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  background: #333;
+  color: white;
+  border-radius: 6px;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  margin-right: 8px;
+}
