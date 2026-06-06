@@ -16,7 +16,8 @@ app.use(express.static(path.join(__dirname, '..', 'www')));
 app.use('/icons', express.static(path.join(__dirname, '..', 'icons')));
 
 // SPA fallback to index.html for client-side routing
-app.get('*', (req, res) => {
+// Use '/*' instead of '*' to avoid path-to-regexp errors
+app.get('/*', (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'www', 'index.html'));
 });
 
