@@ -329,15 +329,82 @@ function enableSheetDrag(sheet) {
 }
 
 /* -----------------------------
-   EMOJI PICKER
+   EMOJI PICKER (NEW VERSION)
 ----------------------------- */
+
+/* Recommended quick‑access emojis */
 const RECOMMENDED = [
   "🛒","🚗","🏠","🍽️","💡","🐶","🎮","💊","🎁","💵","💳","🧾","📚",
   "🧼","🧘","🧳","🛠️","🪙"
 ];
 
-const FULL_EMOJIS = [..."😀😃😄😁😆😅😂🤣😊😇🙂🙃😉😌😍🥰😘😗😙😚😋😛😝😜🤪🤨🧐🤓😎🤩🥳😏😒😞😔😟😕🙁☹️😣😖😫😩🥺😢😭😤😠😡🤬🤯😳🥵🥶😱😨😰😥😓🤗🤔🤭🤫🤥😶😐😑"];
+/* Full curated finance‑friendly emoji library */
+const EMOJI_CATEGORIES = {
+  "Groceries & Household": [
+    "🛒","🥑","🍎","🍌","🍞","🥖","🧀","🍗","🥩","🍕","🌮","🍱","🍣","🍪","🧻","🧼","🧽","🧺"
+  ],
+  "Transportation & Auto": [
+    "🚗","🚙","🚕","🚐","🚚","🛻","⛽","🛠️","🔧","🧰","🚦","🅿️","🛞"
+  ],
+  "Housing & Utilities": [
+    "🏠","🏡","🛏️","🚿","🛁","🚽","💡","🔌","🔥","🧯","🪟","🛋️","🧹"
+  ],
+  "Work & Income": [
+    "💼","🧾","📊","📈","📉","🗂️","🗃️","🧮","💻","🖥️","🖨️"
+  ],
+  "Banking & Bills": [
+    "💳","💵","💰","🪙","🏦","🧾","📄","🏧","🔐"
+  ],
+  "Dining & Coffee": [
+    "🍽️","🍔","🍟","🍕","🍜","🍝","🍣","🍱","🍛","🍺","🍷","☕","🧋"
+  ],
+  "Entertainment": [
+    "🎉","🎮","🎧","🎬","🎟️","🎭","🎤","🎵","📺","🎲","🎯"
+  ],
+  "Shopping & Retail": [
+    "🛍️","👕","👖","👗","👟","🧢","👜","👛","💄","🕶️","⌚"
+  ],
+  "Kids & Family": [
+    "🧸","🍼","🎒","🎨","🖍️","🧩"
+  ],
+  "Pets": [
+    "🐶","🐱","🐾","🦴","🐕‍🦺","🐈","🐟"
+  ],
+  "Health & Medical": [
+    "🏥","💊","💉","🩺","🩹","🧪","🧬"
+  ],
+  "Fitness & Sports": [
+    "🏋️‍♂️","🏋️‍♀️","🏃‍♂️","🏃‍♀️","🚴‍♂️","🚴‍♀️","🥾","🏀","⚽","🏈","🎾"
+  ],
+  "Travel": [
+    "✈️","🧳","🏝️","🏨","🚆","🚢","🗺️","🧭"
+  ],
+  "Education": [
+    "🎓","📚","📖","✏️","📝","🧠","🧪"
+  ],
+  "Repairs & Home Improvement": [
+    "🛠️","🔧","🔨","🪚","🪛","🧰","🪜"
+  ],
+  "Gifts & Holidays": [
+    "🎁","🎄","🎃","🎆","🎇","🎀"
+  ],
+  "Gardening & Outdoors": [
+    "🌱","🌿","🌳","🌲","🌻","🌼","🌷","🪴"
+  ],
+  "Self‑Care & Wellness": [
+    "🧘‍♂️","🧘‍♀️","🛁","🕯️","🌸"
+  ],
+  "Emergency": [
+    "🚨","⚠️","🆘","🔥"
+  ]
+};
 
+/* Flatten all emojis for search */
+const FULL_EMOJIS = Object.values(EMOJI_CATEGORIES).flat();
+
+/* -----------------------------
+   SETUP PICKER
+----------------------------- */
 function setupEmojiPicker() {
   const sheetModal = document.getElementById("sheet-modal");
   const emojiSheet = document.getElementById("emoji-sheet");
@@ -345,10 +412,12 @@ function setupEmojiPicker() {
   const fullGrid = document.getElementById("emoji-full");
   const moreBtn = document.getElementById("emoji-more");
   const emojiPreviewBtn = document.getElementById("emoji-preview");
+  const searchInput = document.getElementById("emoji-search");
 
   if (sheetModal) enableSheetDrag(sheetModal);
   if (emojiSheet) enableSheetDrag(emojiSheet);
 
+  /* Recommended section */
   if (recGrid) {
     recGrid.innerHTML = "";
     RECOMMENDED.forEach(e => {
@@ -360,17 +429,12 @@ function setupEmojiPicker() {
     });
   }
 
+  /* Full emoji list (initially hidden) */
   if (fullGrid) {
-    fullGrid.innerHTML = "";
-    FULL_EMOJIS.forEach(e => {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.textContent = e;
-      btn.onclick = () => selectEmoji(e);
-      fullGrid.appendChild(btn);
-    });
+    renderEmojiGrid(FULL_EMOJIS);
   }
 
+  /* Expand full list */
   if (moreBtn && fullGrid && emojiSheet) {
     moreBtn.onclick = () => {
       fullGrid.classList.remove("hidden");
@@ -378,11 +442,49 @@ function setupEmojiPicker() {
     };
   }
 
+  /* Open picker from preview */
   if (emojiPreviewBtn && emojiSheet) {
     emojiPreviewBtn.onclick = () => openSheet(emojiSheet);
   }
+
+  /* Search bar */
+  if (searchInput) {
+    searchInput.addEventListener("input", () => {
+      const q = searchInput.value.toLowerCase().trim();
+      if (!q) {
+        renderEmojiGrid(FULL_EMOJIS);
+        return;
+      }
+
+      const filtered = FULL_EMOJIS.filter(e => {
+        return Object.entries(EMOJI_CATEGORIES).some(([cat, list]) =>
+          list.includes(e) && cat.toLowerCase().includes(q)
+        );
+      });
+
+      renderEmojiGrid(filtered.length ? filtered : FULL_EMOJIS);
+    });
+  }
 }
 
+/* Render emojis into the grid */
+function renderEmojiGrid(list) {
+  const fullGrid = document.getElementById("emoji-full");
+  if (!fullGrid) return;
+
+  fullGrid.innerHTML = "";
+  list.forEach(e => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.textContent = e;
+    btn.onclick = () => selectEmoji(e);
+    fullGrid.appendChild(btn);
+  });
+}
+
+/* -----------------------------
+   SELECT EMOJI
+----------------------------- */
 function selectEmoji(e) {
   const emojiInput = document.getElementById("modal-emoji");
   const emojiPreview = document.getElementById("emoji-preview");
