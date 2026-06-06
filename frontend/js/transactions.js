@@ -48,12 +48,6 @@ async function loadTransactions(list) {
   const catMap = window.categoryEmojiMap || {};
   const envMap = window.envelopeEmojiMap || {};
 
-  // Attach emoji to each transaction
-  transactions.forEach(tx => {
-    tx.categoryEmoji = catMap[tx.categoryId] || null;
-    tx.envelopeEmoji = envMap[tx.envelopeId] || null;
-  });
-
   // Helper: choose emoji
   function getTxEmoji(tx) {
     return tx.categoryEmoji || tx.envelopeEmoji || "❓";
@@ -397,6 +391,7 @@ async function loadTargets() {
 
   select.innerHTML = '<option value="">Select a category...</option>';
 
+  // 1. Load budget mode
   let mode = "simple";
   try {
     const modeRes = await fetch("/api/budget/mode");
@@ -411,6 +406,7 @@ async function loadTargets() {
     throw err;
   }
 
+  // 2. Load full summary (categories + envelopes)
   const res = await fetch("/api/budget/summary");
   const ct2 = res.headers.get("content-type") || "";
   if (!ct2.includes("application/json")) {
@@ -419,14 +415,37 @@ async function loadTargets() {
   }
   const data = await res.json();
 
-  const items = mode === "simple" ? data.categories : data.envelopes;
+  const categories = data.categories || [];
+  const envelopes = data.envelopes || [];
 
-  items.forEach(i => {
-    const opt = document.createElement("option");
-    opt.value = i.id;
-    opt.textContent = `${i.emoji || ""} ${i.name}`;
-    select.appendChild(opt);
+  // 3. Build emoji lookup maps for transactions
+  window.categoryEmojiMap = {};
+  window.envelopeEmojiMap = {};
+
+  categories.forEach(c => {
+    window.categoryEmojiMap[c.id] = c.emoji;
   });
+
+  envelopes.forEach(e => {
+    window.envelopeEmojiMap[e.id] = e.emoji;
+  });
+
+  // 4. Populate dropdown based on mode
+  if (mode === "simple") {
+    categories.forEach(i => {
+      const opt = document.createElement("option");
+      opt.value = i.id;
+      opt.textContent = `${i.emoji || ""} ${i.name}`;
+      select.appendChild(opt);
+    });
+  } else {
+    envelopes.forEach(i => {
+      const opt = document.createElement("option");
+      opt.value = i.id;
+      opt.textContent = `${i.emoji || ""} ${i.name}`;
+      select.appendChild(opt);
+    });
+  }
 }
 
 /* ============================================================
