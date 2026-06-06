@@ -28,11 +28,11 @@ app.use("/api/budget/summary", require("./api/budget/summary"));
 // TRANSACTIONS
 app.use("/api/transactions", require("./api/transactions/transactions"));
 
-// Serve frontend (static files from /www)
+// Serve frontend
 app.use(express.static(path.join(__dirname, "../www")));
 
-// SPA fallback: any non-API route returns index.html
-app.get("*", (req, res) => {
+// SPA fallback (Express 5-safe)
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, "../www/index.html"));
 });
 
