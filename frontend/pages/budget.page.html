@@ -55,29 +55,25 @@
 
 
   <!-- ========================================================= -->
-  <!-- ⭐ EMOJI PICKER SHEET -->
-  <!-- ========================================================= -->
-  <input id="emoji-search" type="text" placeholder="Search categories…" class="emoji-search-input">
-  
-  <div id="emoji-sheet" class="sheet hidden">
-    <div class="sheet-handle"></div>
+<!-- ⭐ EMOJI PICKER SHEET (FIXED + SEARCH INSIDE SHEET) -->
+<!-- ========================================================= -->
+<div id="emoji-sheet" class="sheet hidden">
+  <div class="sheet-handle"></div>
 
-    <div class="sheet-content">
+  <div class="sheet-content">
 
-      <h3>Recommended</h3>
-      <div id="emoji-recommended" class="emoji-grid"></div>
+    <!-- Search bar INSIDE the sheet -->
+    <input id="emoji-search" 
+           type="text" 
+           placeholder="Search categories…" 
+           class="emoji-search-input">
 
-      <button id="emoji-more" class="more-btn">More Emojis…</button>
+    <h3>Recommended</h3>
+    <div id="emoji-recommended" class="emoji-grid"></div>
 
-      <div id="emoji-full" class="emoji-grid hidden"></div>
+    <button id="emoji-more" class="more-btn">More Emojis…</button>
 
-    </div>
+    <div id="emoji-full" class="emoji-grid hidden"></div>
+
   </div>
-
-
-  <!-- ========================================================= -->
-  <!-- ⭐ BACKDROP -->
-  <!-- ========================================================= -->
-  <div id="sheet-backdrop" class="backdrop hidden"></div>
-
 </div>
