@@ -2,6 +2,7 @@
  backend/server.js
  Minimal Express server that serves the static site in ../www
  and serves the icons folder at /icons
+ Uses a regex fallback (/.*/) to avoid path-to-regexp '*' parsing errors.
 */
 const express = require('express');
 const path = require('path');
@@ -16,8 +17,8 @@ app.use(express.static(path.join(__dirname, '..', 'www')));
 app.use('/icons', express.static(path.join(__dirname, '..', 'icons')));
 
 // SPA fallback to index.html for client-side routing
-// Use '/*' instead of '*' to avoid path-to-regexp errors
-app.get('/*', (req, res) => {
+// Use a regular expression route to avoid path-to-regexp errors
+app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, '..', 'www', 'index.html'));
 });
 
