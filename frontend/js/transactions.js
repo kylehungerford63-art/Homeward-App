@@ -44,6 +44,21 @@ async function loadTransactions(list) {
   // Store globally for editing
   window.currentTransactions = transactions;
 
+  // Build emoji lookup maps (from categories/envelopes loaded earlier)
+  const catMap = window.categoryEmojiMap || {};
+  const envMap = window.envelopeEmojiMap || {};
+
+  // Attach emoji to each transaction
+  transactions.forEach(tx => {
+    tx.categoryEmoji = catMap[tx.categoryId] || null;
+    tx.envelopeEmoji = envMap[tx.envelopeId] || null;
+  });
+
+  // Helper: choose emoji
+  function getTxEmoji(tx) {
+    return tx.categoryEmoji || tx.envelopeEmoji || "❓";
+  }
+
   list.innerHTML = transactions
     .map(tx => {
       const amount = Number(tx.amount).toFixed(2);
@@ -56,8 +71,12 @@ async function loadTransactions(list) {
 
       return `
         <div class="tx-card" data-id="${tx.id}">
+          
           <div class="tx-card-left">
-            <div class="tx-card-name">${escapeHtml(tx.name)}</div>
+            <div class="tx-card-name">
+              <span class="tx-emoji">${getTxEmoji(tx)}</span>
+              ${escapeHtml(tx.name)}
+            </div>
             <div class="tx-card-date">${formattedDate}</div>
           </div>
 
