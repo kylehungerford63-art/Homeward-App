@@ -1,14 +1,25 @@
-// backend/server.js
-// Minimal bootstrap: import the Express app from app.js and start the server.
+﻿/*
+ backend/server.js
+ Minimal Express server that serves the static site in ../www
+ and serves the icons folder at /icons
+*/
+const express = require('express');
+const path = require('path');
 
-const app = require('./app');
-
+const app = express();
 const PORT = process.env.PORT || 3000;
 
-if (require.main === module) {
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Server listening on http://localhost:${PORT}`);
-  });
-}
+// Serve main static site (adjust 'www' if your static folder is different)
+app.use(express.static(path.join(__dirname, '..', 'www')));
 
-module.exports = app;
+// Serve icons folder at /icons
+app.use('/icons', express.static(path.join(__dirname, '..', 'icons')));
+
+// SPA fallback to index.html for client-side routing
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '..', 'www', 'index.html'));
+});
+
+app.listen(PORT, () => {
+  console.log(`Server listening on port ${PORT}`);
+});
