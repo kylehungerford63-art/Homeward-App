@@ -1,12 +1,16 @@
-// backend/app.js
+﻿// backend/app.js
 // Express app bootstrap with JSON parsing, safe router loader, static frontend, and error handling.
 
-console.log("🔥 USING THIS APP.JS");
+console.log("ðŸ”¥ USING THIS APP.JS");
 const express = require("express");
 const path = require("path");
 const cors = require("cors");
 
 const app = express();
+
+// Serve icons folder at /icons
+app.use('/icons', express.static(path.join(__dirname, '..', 'icons')));
+
 
 // Core middleware
 app.use(cors());
@@ -89,10 +93,12 @@ app.use((err, req, res, next) => {
 });
 
 /* ============================================
-   4. FALLBACK — serve index.html for client routing (GET only)
+   4. FALLBACK â€” serve index.html for client routing (GET only)
 ============================================ */
 app.get(/.*/, (req, res) => {
   res.sendFile(path.join(__dirname, "../frontend/index.html"));
 });
 
 module.exports = app;
+
+
