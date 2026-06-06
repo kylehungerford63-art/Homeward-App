@@ -1,6 +1,6 @@
 import { get, post } from "./utils/api.js";
 
-let editingTransactionId = null; // null = add mode, id = edit mode
+let editingTransactionId = null;
 
 export function initTransactions() {
   const list = document.getElementById("transaction-list");
@@ -42,7 +42,7 @@ async function loadTransactions(list) {
     if (!ct.includes("application/json")) {
       const text = await res.text();
       console.error("Expected JSON from /api/transactions, got:", text.slice(0, 300));
-      list.innerHTML = `<div class="error">Could not load transactions (unexpected response)</div>`;
+      list.innerHTML = `<div class="error">Could not load transactions</div>`;
       return;
     }
     transactions = await res.json();
@@ -63,7 +63,6 @@ async function loadTransactions(list) {
   // Store globally for editing
   window.currentTransactions = transactions;
 
-  // Helper: choose emoji
   function getTxEmoji(tx) {
     return tx.categoryEmoji || tx.envelopeEmoji || "❓";
   }
@@ -87,7 +86,7 @@ async function loadTransactions(list) {
     });
 
     html += `
-      <div class="tx-card swipeable" data-id="${tx.id}">
+      <div class="tx-card" data-id="${tx.id}">
         
         <div class="tx-card-content">
 
@@ -110,8 +109,6 @@ async function loadTransactions(list) {
           </div>
 
         </div>
-
-        <div class="tx-swipe-delete">Delete</div>
 
       </div>
     `;
@@ -161,48 +158,6 @@ async function loadTransactions(list) {
       if (e.target.closest(".tx-actions")) return;
       const id = card.closest(".tx-card").dataset.id;
       openEditTransaction(id);
-    });
-  });
-
-  /* SWIPE‑TO‑DELETE */
-  list.querySelectorAll(".swipeable").forEach(card => {
-    let startX = 0;
-    let currentX = 0;
-    let swiping = false;
-
-    const content = card.querySelector(".tx-card-content");
-
-    card.addEventListener("touchstart", e => {
-      startX = e.touches[0].clientX;
-      swiping = true;
-    });
-
-    card.addEventListener("touchmove", e => {
-      if (!swiping) return;
-      currentX = e.touches[0].clientX - startX;
-
-      if (currentX < 0) {
-        content.style.transform = `translateX(${currentX}px)`;
-      }
-    });
-
-    card.addEventListener("touchend", () => {
-      swiping = false;
-
-      if (currentX < -60) {
-        content.style.transform = "translateX(-80px)";
-      } else {
-        content.style.transform = "";
-      }
-    });
-  });
-
-  /* SWIPE DELETE BUTTON */
-  list.querySelectorAll(".tx-swipe-delete").forEach(btn => {
-    btn.addEventListener("click", async e => {
-      const id = btn.closest(".tx-card").dataset.id;
-      await deleteTransaction(id);
-      loadTransactions(list);
     });
   });
 }
@@ -390,7 +345,7 @@ function setupTransactionSheet(list) {
       const ct = modeRes.headers.get("content-type") || "";
       if (!ct.includes("application/json")) {
         const txt = await modeRes.text();
-        throw new Error("Unexpected mode response: " + txt.slice(0, 200));
+        throw new Error("Unexpected mode response");
       }
       ({ mode } = await modeRes.json());
     } catch (err) {
@@ -406,8 +361,6 @@ function setupTransactionSheet(list) {
     }
 
     try {
-      let result;
-
       if (editingTransactionId) {
         const res = await fetch(`/api/transactions/${editingTransactionId}`, {
           method: "PUT",
@@ -419,12 +372,11 @@ function setupTransactionSheet(list) {
           alert("Update failed");
           return;
         }
-        result = await res.json();
       } else {
-        result = await post("/api/transactions", body);
+        const result = await post("/api/transactions", body);
         if (!result || !result.success) {
           console.error("Transaction save failed", result);
-          alert("Save failed: " + (result?.error || "Unknown error"));
+          alert("Save failed");
           return;
         }
       }
@@ -455,7 +407,6 @@ function setupTransactionSheet(list) {
    SHEET HELPERS
 ============================================================ */
 function openSheet(sheet, backdrop) {
-  if (!sheet || !backdrop) return;
   backdrop.classList.remove("hidden");
   sheet.classList.remove("hidden");
 
@@ -465,7 +416,6 @@ function openSheet(sheet, backdrop) {
 }
 
 function closeSheet(sheet, backdrop) {
-  if (!sheet || !backdrop) return;
   sheet.classList.add("hidden");
   backdrop.classList.add("hidden");
 }
