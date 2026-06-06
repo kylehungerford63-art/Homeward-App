@@ -299,16 +299,17 @@ function closeSheet(sheet) {
 }
 
 function enableSheetDrag(sheet) {
+  const handle = sheet.querySelector(".sheet-handle");
   let startY = 0;
   let currentY = 0;
   let dragging = false;
 
-  sheet.addEventListener("touchstart", e => {
+  handle.addEventListener("touchstart", e => {
     dragging = true;
     startY = e.touches[0].clientY;
   });
 
-  sheet.addEventListener("touchmove", e => {
+  handle.addEventListener("touchmove", e => {
     if (!dragging) return;
     currentY = e.touches[0].clientY - startY;
 
@@ -317,7 +318,7 @@ function enableSheetDrag(sheet) {
     }
   });
 
-  sheet.addEventListener("touchend", () => {
+  handle.addEventListener("touchend", () => {
     dragging = false;
 
     if (currentY > 120) {
@@ -348,6 +349,15 @@ const EMOJI_CATEGORIES = {
   ],
   "Housing & Utilities": [
     "🏠","🏡","🛏️","🚿","🛁","🚽","💡","🔌","🔥","🧯","🪟","🛋️","🧹"
+  ],
+  "Internet & Connectivity": [
+    "📶","📡","🛰️","📡","📶","📡"
+  ],
+  "Phone & Communication": [
+    "📱","📞","☎️","📟","📲","💬","📩","📧"
+  ],
+  "Tech & Devices": [
+    "💻","🖥️","⌨️","🖱️","🖨️","🕹️","🎧","📺","📦","💿","📀"
   ],
   "Work & Income": [
     "💼","🧾","📊","📈","📉","🗂️","🗃️","🧮","💻","🖥️","🖨️"
@@ -490,16 +500,16 @@ function selectEmoji(e) {
   const emojiPreview = document.getElementById("emoji-preview");
   const emojiSheet = document.getElementById("emoji-sheet");
 
-  if (!emojiInput || !emojiPreview) return;
-
   emojiInput.value = e;
   emojiPreview.textContent = e;
 
+  // Close only the emoji sheet
   if (emojiSheet) closeSheet(emojiSheet);
 
+  // If user was forced into emoji picker, return them to main modal
   if (pendingSaveAfterEmoji) {
     pendingSaveAfterEmoji = false;
-    saveItem();
+    openSheet(document.getElementById("sheet-modal"));
   }
 }
 
