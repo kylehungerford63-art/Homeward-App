@@ -27,7 +27,6 @@ function loadPage(page) {
     .then(html => {
       document.querySelector(".app-container").innerHTML = html;
 
-      // Update active nav item
       document.querySelectorAll(".nav-item").forEach(item => {
         item.classList.remove("active");
       });
@@ -36,30 +35,30 @@ function loadPage(page) {
       if (activeItem) activeItem.classList.add("active");
 
       switch (page) {
-  case "dashboard":
-    initDashboard();
-    break;
+        case "dashboard":
+          initDashboard();
+          break;
 
-  case "budget":
-    import(`./budget.js?t=${Date.now()}`).then(module => {
-      module.initBudget();
-    });
-    break;
+        case "budget":
+          import(`./budget.js?t=${Date.now()}`).then(module => {
+            module.initBudget();
+          });
+          break;
 
-  case "transactions":
-    import(`./transactions.js?t=${Date.now()}`).then(module => {
-      module.initTransactions();
-    });
-    break;
+        case "transactions":
+          import(`./transactions.js?t=${Date.now()}`).then(module => {
+            module.initTransactions();
+          });
+          break;
 
-  case "goals":
-    initGoals();
-    break;
+        case "goals":
+          initGoals();
+          break;
 
-  case "insights":
-    initInsights();
-    break;
-}
+        case "insights":
+          initInsights();
+          break;
+      }
     });
 }
 
@@ -74,16 +73,12 @@ const highlight = document.querySelector(".nav-highlight");
 function snapToIndex(index) {
   const item = navItems[index];
 
-  // Scroll nav item into view
   item.scrollIntoView({ behavior: "smooth", inline: "center" });
 
-  // Update highlight width
   highlight.style.width = item.offsetWidth + 12 + "px";
 
-  // Load the page
   loadPage(item.dataset.page);
 
-  // Scroll page to top
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -92,9 +87,65 @@ navItems.forEach((item, i) => {
 });
 
 /* ============================
+   PROFILE DROPDOWN + AUTH
+============================ */
+
+function initProfileMenu() {
+  const profileCircle = document.getElementById("profile-circle");
+  const profileMenu = document.getElementById("profile-menu");
+  const userLabel = document.getElementById("profile-user-label");
+
+  const btnLogin = document.getElementById("menu-login");
+  const btnRegister = document.getElementById("menu-register");
+  const btnLogout = document.getElementById("menu-logout");
+
+  const token = localStorage.getItem("token");
+  const userJson = localStorage.getItem("user");
+
+  if (token && userJson) {
+    const user = JSON.parse(userJson);
+    userLabel.textContent = user.name || user.email || "Account";
+    btnLogin.style.display = "none";
+    btnRegister.style.display = "none";
+    btnLogout.style.display = "block";
+  } else {
+    userLabel.textContent = "Guest";
+    btnLogin.style.display = "block";
+    btnRegister.style.display = "block";
+    btnLogout.style.display = "none";
+  }
+
+  profileCircle.addEventListener("click", () => {
+    const isVisible = profileMenu.style.display === "block";
+    profileMenu.style.display = isVisible ? "none" : "block";
+  });
+
+  btnLogin.addEventListener("click", () => {
+    window.location.href = "/pages/login.page.html";
+  });
+
+  btnRegister.addEventListener("click", () => {
+    window.location.href = "/pages/register.page.html";
+  });
+
+  btnLogout.addEventListener("click", () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    window.location.href = "/pages/login.page.html";
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!profileCircle.contains(e.target) && !profileMenu.contains(e.target)) {
+      profileMenu.style.display = "none";
+    }
+  });
+}
+
+/* ============================
    INITIALIZE APP
 ============================ */
 
 document.addEventListener("DOMContentLoaded", () => {
+  initProfileMenu();
   setTimeout(() => snapToIndex(0), 150);
 });

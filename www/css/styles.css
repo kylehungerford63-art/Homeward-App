@@ -920,9 +920,13 @@ body {
 }
 
 /* ============================
-   TRANSACTION CARD STYLING
-============================ */
+   TRANSACTION CARD + ACTIONS + SHEET + MODAL
+   Full replacement — mobile-first, compact actions under amount,
+   emoji left of title, restored modal visuals.
+   Place this at the end of your main stylesheet.
+   ============================ */
 
+/* Add transaction button */
 .add-tx-btn {
   width: 100%;
   padding: 12px 16px;
@@ -933,458 +937,120 @@ body {
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
   margin-bottom: 12px;
 }
 
-.add-tx-btn:active {
-  transform: scale(0.98);
-  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
-}
-
-/* Transaction card styling */
+/* Card base */
 .tx-card {
   background: rgba(15, 23, 42, 0.96);
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
-  padding: 14px;
+  padding: 12px;
   margin-bottom: 10px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  transition: all 0.2s ease;
+  justify-content: space-between;
+  gap: 12px;
+  transition: transform 0.12s ease, background 0.12s ease;
 }
 
-.tx-card:active {
-  background: rgba(15, 23, 42, 1);
-  transform: scale(0.98);
-}
-
+/* Left column: emoji + title/date */
 .tx-card-left {
-  flex: 1;
   display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.tx-card-name {
-  font-size: 15px;
-  font-weight: 600;
-  color: #f5f5f7;
-}
-
-.tx-card-date {
-  font-size: 13px;
-  color: #a0a0a0;
-}
-
-.tx-card-category {
-  font-size: 12px;
-  color: #8892a0;
-  margin-top: 2px;
-}
-
-.tx-card-amount {
-  font-size: 16px;
-  font-weight: 700;
-  color: #4CAF50;
-  text-align: right;
-  min-width: 80px;
-}
-
-.tx-card-amount.negative {
-  color: #ef4444;
-}
-
-/* ============================
-   SHEET STYLING (Transaction Form)
-============================ */
-
-.sheet.hidden {
-  display: none !important;
-  transform: translateY(100%);
-}
-
-.sheet label {
-  display: block;
-  margin-top: 12px;
-  margin-bottom: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  color: #222;
-}
-
-.sheet input,
-.sheet select {
-  width: 100%;
-  padding: 10px 12px;
-  background: #ffffff;
-  color: #222;
-  border: 1px solid #d0d0d0;
-  border-radius: 8px;
-  font-size: 15px;
-  box-sizing: border-box;
-  margin-bottom: 4px;
-}
-
-.sheet input:focus,
-.sheet select:focus {
-  outline: none;
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-}
-
-.sheet-actions {
-  display: flex;
+  flex-direction: row;
+  align-items: center;
   gap: 10px;
-  margin-top: 20px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
-.sheet-btn-save,
-.sheet-btn-cancel {
-  flex: 1;
-  padding: 12px 16px;
-  border: none;
+/* Emoji box */
+.icon-box {
+  width: 36px;
+  height: 36px;
+  background: #2b2f36;
+  color: #fff;
   border-radius: 8px;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.sheet-btn-save {
-  background: linear-gradient(135deg, #4CAF50 0%, #388E3C 100%);
-  color: white;
-}
-
-.sheet-btn-save:active {
-  transform: scale(0.98);
-  box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
-}
-
-.sheet-btn-cancel {
-  background: #e5e5e5;
-  color: #222;
-}
-
-.sheet-btn-cancel:active {
-  background: #d0d0d0;
-  transform: scale(0.98);
-}
-
-.sheet h3 {
-  margin-top: 0;
-  margin-bottom: 16px;
-  color: #222;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 18px;
+  flex: 0 0 36px;
 }
 
-/* Backdrop for transaction sheet */
-.backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.45);
-  z-index: 900;
+/* Title + date stack */
+.tx-meta { display:flex; flex-direction:column; min-width:0; overflow:hidden; }
+.tx-card-name { font-size:15px; font-weight:600; color:#f5f5f7; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tx-card-date { font-size:13px; color:#a0a0a0; margin-top:2px; }
+
+/* Right column: amount + compact actions stacked vertically on mobile */
+.tx-right { display:flex; flex-direction:column; align-items:flex-end; gap:6px; flex-shrink:0; min-width:84px; }
+
+/* Amount */
+.tx-card-amount { font-size:16px; font-weight:700; color:#4CAF50; text-align:right; min-width:80px; }
+.tx-card-amount.negative { color:#ef4444; }
+
+/* Compact action group (mobile) */
+.tx-actions-compact { display:flex; gap:6px; align-items:center; justify-content:flex-end; }
+.tx-actions-compact button {
+  width:28px; height:28px; padding:0; border-radius:6px; border:none;
+  background: rgba(255,255,255,0.03); color:#cbd5e1; display:inline-flex; align-items:center; justify-content:center; font-size:14px; line-height:1;
 }
 
-.backdrop.hidden {
-  display: none;
+/* Legacy inline actions (desktop) hidden on mobile */
+.tx-card-actions { display:none; gap:6px; margin-right:10px; }
+
+/* Desktop / wide screens: show inline actions and hide compact group */
+@media (min-width: 720px) {
+  .tx-right { flex-direction:row; align-items:center; }
+  .tx-actions-compact { display:none; }
+  .tx-card-actions { display:flex; }
 }
 
-/* Bottom sheet container */
-.sheet {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  max-width: 480px;
-  margin: 0 auto;
-  background: #111827;
-  border-radius: 16px 16px 0 0;
-  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.6);
-  padding: 16px 16px 24px;
-  z-index: 901;
-}
-
-/* Handle + content just for looks */
-.sheet-handle {
-  width: 40px;
-  height: 4px;
-  border-radius: 999px;
-  background: #4b5563;
-  margin: 0 auto 12px;
-}
-
-.sheet-content label {
-  display: block;
-  font-size: 0.85rem;
-  margin-top: 10px;
-  margin-bottom: 4px;
-}
-
-.sheet-content input,
-.sheet-content select {
-  width: 100%;
-  padding: 8px 10px;
-  border-radius: 8px;
-  border: 1px solid #374151;
-  background: #020617;
-  color: #e5e7eb;
-}
-
-.sheet-actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 16px;
-}
-
-.sheet-btn-save,
-.sheet-btn-cancel {
-  flex: 1;
-  padding: 10px 0;
-  border-radius: 999px;
-  border: none;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sheet-btn-save {
-  background: #2563eb;
-  color: white;
-}
-
-.sheet-btn-cancel {
-  background: #111827;
-  color: #e5e7eb;
-  border: 1px solid #374151;
-}
-
-.tx-card-actions {
-  display: flex;
-  gap: 6px;
-  margin-right: 10px;
-}
-
-.tx-card-actions button {
-  background: none;
-  border: none;
-  font-size: 18px;
-  cursor: pointer;
-  opacity: 0.8;
-  transition: opacity 0.15s ease, color 0.15s ease;
-  color: #e5e7eb;
-}
-
-.tx-card-actions button:hover {
-  opacity: 1;
-}
-
-/* Ignored state: keep card visually different but buttons usable */
+/* Ignored state */
 .tx-card.ignored {
   background: rgba(15, 23, 42, 0.7);
   border-style: dashed;
-  border-color: rgba(248, 250, 252, 0.35);
-  opacity: 1;
+  border-color: rgba(255,255,255,0.12);
+  filter: grayscale(0.6) brightness(0.85);
 }
-
-.tx-card.ignored .tx-edit,
-.tx-card.ignored .tx-delete,
-.tx-card.ignored .tx-ignore {
-  opacity: 1;
-  pointer-events: auto;
-  color: #e5e7eb;
-}
-
-/* ------------------------------
-   TRANSACTION SHEET — MOBILE UI
------------------------------- */
-
-#transaction-sheet {
-  padding: 18px 20px;
-  font-size: 16px;
-}
-
-/* Labels */
-#transaction-sheet label {
-  display: block;
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 6px;
-  color: #fff;
-}
-
-/* Inputs */
-#transaction-sheet input,
-#transaction-sheet select {
-  width: 100%;
-  padding: 12px 14px;
-  font-size: 16px;
-  border-radius: 8px;
-  border: none;
-  margin-bottom: 16px;
-  background: #1f1f1f;
-  color: #fff;
-}
-
-/* Placeholder text */
-#transaction-sheet input::placeholder {
-  color: #aaa;
-}
-
-/* Buttons */
-#transaction-sheet button {
-  font-size: 16px;
-  padding: 12px 16px;
-  border-radius: 8px;
-}
-
-.switch-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 14px 0;
-  font-size: 17px;
-  font-weight: 600;
-  color: #fff;
-}
-
-.switch-btn {
-  width: 70px;
-  padding: 6px 0;
-  border-radius: 20px;
-  border: 1px solid rgba(255,255,255,0.15);
-  background: #3a3f4b;
-  color: #fff;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  box-shadow:
-    inset 3px 3px 6px rgba(0,0,0,0.55),
-    inset -3px -3px 6px rgba(255,255,255,0.08);
-}
-
-.switch-btn[data-state="on"] {
-  background: #3b82f6;
-  border-color: rgba(255,255,255,0.25);
-  box-shadow:
-    inset 3px 3px 6px rgba(0,0,0,0.55),
-    inset -3px -3px 6px rgba(255,255,255,0.12),
-    0 0 10px rgba(59,130,246,0.6);
-}
-
-.tx-card.ignored {
-  opacity: 0.35 !important;
-  filter: grayscale(1) brightness(0.6);
-  border-style: dashed !important;
-  border-color: rgba(255,255,255,0.35) !important;
-  transition: opacity 0.25s ease, filter 0.25s ease;
-}
-
 .tx-card.ignored .tx-card-name,
 .tx-card.ignored .tx-card-date,
-.tx-card.ignored .tx-card-amount {
-  opacity: 0.6;
-}
+.tx-card.ignored .tx-card-amount { opacity:0.7; }
 
-.tx-card {
-  transition: opacity 0.25s ease, filter 0.25s ease;
-}
+/* Transaction section header */
+.tx-section { margin-bottom: 18px; }
+.tx-section-header { font-size:13px; color: #9aa4b2; margin:8px 0; font-weight:600; }
 
-/* Chart container and canvas sizing for timeline */
-.chart-container {
-  width: 100%;
-  height: 220px;        /* fixed visual height */
-  max-height: 320px;    /* safety cap */
-  position: relative;
-  margin-top: 8px;
-}
+/* ------------------------------
+   Transaction sheet (mobile bottom sheet)
+------------------------------ */
+.sheet.hidden { display:none !important; transform: translateY(100%); }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; max-width: 480px; margin: 0 auto; background: #111827; border-radius: 16px 16px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,0.6); padding: 16px 16px 24px; z-index: 901; }
+.sheet-handle { width:40px; height:4px; border-radius:999px; background:#4b5563; margin:0 auto 12px; }
+#transaction-sheet label { display:block; font-size:15px; font-weight:600; margin-bottom:6px; color:#fff; }
+#transaction-sheet input, #transaction-sheet select { width:100%; padding:12px 14px; border-radius:8px; border:none; margin-bottom:12px; background:#1f1f1f; color:#fff; }
 
-canvas#goalTimelineChart {
-  width: 100% !important;
-  height: 100% !important; /* fill the fixed container */
-  display: block;
-}
-
-/* Validation errors and button spinner */
-.field-error {
-  color: #ffb4b4;
-  font-size: 12px;
-  margin-top: 6px;
-  min-height: 16px;
-}
-
-/* Button loading state */
-button#update-goal-btn {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* small spinner inside button */
-.btn-spinner {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.18);
-  border-top-color: rgba(255,255,255,0.9);
-  animation: spin 900ms linear infinite;
-  display: inline-block;
-  margin-right: 6px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-button#update-goal-btn.btn--loading {
-  opacity: 0.95;
-  transform: translateY(0);
-  pointer-events: none;
-}
-
-/* ===== Full replacement: Modal, inputs, and button styles =====
-   Replace the entire block you pasted with this CSS.
-*/
-
-/* Modal base and backdrop */
-.modal {
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 1200;
-  box-sizing: border-box;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-.modal[aria-hidden="false"] {
-  display: block;
-}
-
-/* Backdrop covers the screen behind the panel */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(2,6,23,0.6);
-  backdrop-filter: blur(4px);
-  z-index: 1200;
-}
-
-/* Panel: centered, constrained, responsive */
+/* ------------------------------
+   Modal / panel (restored)
+------------------------------ */
+.modal { display:none; position:fixed; inset:0; z-index:1200; box-sizing:border-box; -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale; }
+.modal[aria-hidden="false"] { display:block; }
+.modal-backdrop { position:fixed; inset:0; background:rgba(2,6,23,0.6); backdrop-filter: blur(4px); z-index:1200; }
 .modal-panel {
   position: fixed !important;
   left: 50% !important;
   top: 50% !important;
   transform: translate(-50%, -50%) scale(1) !important;
   z-index: 1210 !important;
-
   width: 92%;
   max-width: 560px;
   min-width: 320px;
   max-height: 80vh;
   overflow: auto;
   box-sizing: border-box;
-
   background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
   border: 1px solid rgba(255,255,255,0.04);
   box-shadow: 0 18px 40px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
@@ -1393,185 +1059,12 @@ button#update-goal-btn.btn--loading {
   color: #e6eef8;
   backdrop-filter: blur(8px);
 }
-
-/* Subtle open/close transitions */
-.modal-panel[aria-hidden="false"],
-.modal.modal-open .modal-panel {
-  transform: translate(-50%, -50%) scale(1);
-  transition: transform 160ms cubic-bezier(.2,.9,.2,1), opacity 160ms ease;
-  opacity: 1;
-}
-.modal-panel[aria-hidden="true"] {
-  transform: translate(-50%, -50%) scale(0.98);
-  opacity: 0;
-}
-
-/* Header / body layout */
 .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
 .modal-body { max-height: calc(80vh - 120px); overflow:auto; padding-top:6px; }
-
-/* Close button */
-.modal-close {
-  background: transparent;
-  border: 1px solid rgba(255,255,255,0.03);
-  color: #cfe7ff;
-  padding: 6px 8px;
-  border-radius: 10px;
-  cursor: pointer;
-  z-index: 1220;
-}
+.modal-close { background:transparent; border:1px solid rgba(255,255,255,0.03); color:#cfe7ff; padding:6px 8px; border-radius:10px; cursor:pointer; z-index:1220; }
 .modal-close:hover { background: rgba(255,255,255,0.02); transform: translateY(-1px); }
 
-/* Input wrapper spacing */
-.input-wrap { margin-bottom: 12px; position: relative; }
+/* Focus and accessibility */
+button:focus, input:focus { outline:none; box-shadow: 0 0 0 4px rgba(99,102,241,0.06); }
 
-/* Sleep app input style */
-.input-wrap input[type="number"],
-.input-wrap input[type="date"],
-.input-wrap input[type="text"] {
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.06);
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  color: #e6eef8;
-  font-size: 15px;
-  outline: none;
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,0.02),
-    0 6px 18px rgba(2,6,23,0.45);
-  transition: transform 160ms ease, box-shadow 160ms ease, border-color 160ms ease;
-}
-
-/* Placeholder and focus */
-.input-wrap input::placeholder { color: rgba(230,238,248,0.45); }
-.input-wrap input:focus {
-  transform: translateY(-1px);
-  border-color: rgba(99,102,241,0.6);
-  box-shadow:
-    0 8px 30px rgba(59,91,255,0.08),
-    inset 0 1px 0 rgba(255,255,255,0.02);
-}
-
-/* Floating label hint (if used) */
-.input-wrap label.floating {
-  display: block;
-  font-size: 12px;
-  color: rgba(188,211,238,0.9);
-  margin-bottom: 6px;
-}
-
-/* Field error */
-.field-error { color: #ffb4b4; font-size: 12px; margin-top: 6px; min-height: 16px; }
-
-/* Button base */
-button {
-  font-weight: 700;
-  border-radius: 12px;
-  padding: 10px 14px;
-  border: none;
-  cursor: pointer;
-  transition: transform 120ms ease, box-shadow 120ms ease, opacity 120ms ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Primary button */
-button#update-goal-btn,
-button.primary,
-button.btn-primary {
-  background: linear-gradient(180deg,#7aa2ff,#4b6bff);
-  color: #fff;
-  box-shadow: 0 10px 30px rgba(75,107,255,0.18);
-  border: 1px solid rgba(255,255,255,0.06);
-}
-button#update-goal-btn:hover,
-button.primary:hover,
-button.btn-primary:hover { transform: translateY(-2px); }
-
-/* Secondary button */
-button.btn-secondary,
-button#edit-goal-open-btn {
-  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-  color: #dbeeff;
-  border: 1px solid rgba(255,255,255,0.06);
-  box-shadow: 0 6px 18px rgba(2,6,23,0.45);
-}
-button.btn-secondary:hover { transform: translateY(-1px); }
-
-/* Ghost button */
-button.btn-ghost,
-button#modal-cancel-btn {
-  background: transparent;
-  color: #9fb6d9;
-  border: 1px solid rgba(255,255,255,0.03);
-  box-shadow: none;
-}
-button.btn-ghost:hover { background: rgba(255,255,255,0.02); transform: translateY(-1px); }
-
-/* Disabled / loading state */
-button[disabled], button.btn--loading {
-  opacity: 0.85;
-  cursor: default;
-  transform: none;
-  pointer-events: none;
-}
-
-/* Small spinner */
-.btn-spinner {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid rgba(255,255,255,0.18);
-  border-top-color: rgba(255,255,255,0.95);
-  animation: spin 900ms linear infinite;
-  display: inline-block;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* Input icon (if used) */
-.input-wrap .input-icon {
-  position: absolute;
-  left: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: rgba(255,255,255,0.6);
-  pointer-events: none;
-}
-
-/* Make modal buttons full width on small screens */
-@media (max-width: 520px) {
-  .modal-panel { padding: 14px; }
-  .form-actions button { width: 100%; margin-bottom: 8px; }
-  .form-actions { display: flex; flex-direction: column; gap: 8px; }
-}
-
-/* Focus ring */
-button:focus, input:focus {
-  outline: none;
-  box-shadow: 0 0 0 4px rgba(99,102,241,0.06);
-  border-color: rgba(99,102,241,0.6);
-}
-
-/* Compact summary layout */
-.goal-summary { display:flex; gap: 16px; align-items: center; }
-.goal-numbers { flex: 1; }
-.goal-buckets-compact { display:flex; gap:12px; margin-top:8px; }
-.bucket-compact { background: rgba(255,255,255,0.02); padding:8px 10px; border-radius:8px; border:1px solid rgba(255,255,255,0.02); }
-.bucket-title-compact { font-size:13px; color:#bcd3ee; }
-.bucket-value-compact { font-weight:600; color:#e6eef8; }
-
-/* Modal open class for transitions (kept subtle) */
-.modal-open .modal-panel { transform: translate(-50%, -50%) scale(1); transition: transform 180ms ease; }
-
-/* Chart container safety */
-.chart-container { width: 100%; height: 220px; max-height: 320px; position: relative; margin-top: 8px; }
-canvas#goalTimelineChart { width: 100% !important; height: 100% !important; display: block; }
-
-/* Ensure modal elements don't inherit unexpected transforms */
-.modal-panel * { box-sizing: border-box; -webkit-font-smoothing: antialiased; }
-
-/* z-index safety */
-.modal-backdrop { z-index: 1200; }
-.modal-panel { z-index: 1210; }
+/* End of transaction + modal replacement */

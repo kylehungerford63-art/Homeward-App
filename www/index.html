@@ -2,33 +2,27 @@
 <html lang="en">
 <head>
   <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png">
-<link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png">
-<link rel="apple-touch-icon" sizes="120x120" href="/icons/icon-120.png">
-<link rel="apple-touch-icon" sizes="76x76" href="/icons/icon-76.png">
-<link rel="manifest" href="/manifest.json">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="theme-color" content="#0b5cff">
+  <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png">
+  <link rel="apple-touch-icon" sizes="120x120" href="/icons/icon-120.png">
+  <link rel="apple-touch-icon" sizes="76x76" href="/icons/icon-76.png">
+  <link rel="manifest" href="/manifest.json">
+
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="theme-color" content="#0b5cff">
 
   <meta charset="UTF-8" />
   <title>Homeward</title>
 
-  <!-- REQUIRED for iPhone scaling -->
   <meta name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 
-  <!-- Enable full‑screen PWA mode on iOS -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-  <!-- App icons (optional, but recommended later)
-  <link rel="apple-touch-icon" href="assets/icon.png">
-  -->
-
   <link rel="stylesheet" href="css/styles.css" />
 
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
@@ -46,7 +40,17 @@
 
         <div class="header-title">Homeward</div>
 
-        <div class="header-profile">KP</div>
+        <!-- PROFILE CIRCLE + DROPDOWN -->
+        <div class="header-profile">
+          <div id="profile-circle" class="profile-circle">KP</div>
+
+          <div id="profile-menu" class="profile-menu" style="display:none;">
+            <div id="profile-user-label" class="profile-user-label">Guest</div>
+            <button id="menu-login" class="profile-menu-item">Log in</button>
+            <button id="menu-register" class="profile-menu-item">Create account</button>
+            <button id="menu-logout" class="profile-menu-item">Logout</button>
+          </div>
+        </div>
       </div>
 
       <nav class="header-nav">
@@ -67,33 +71,8 @@
 
   </div>
 
-  <!-- JS Modules -->
   <script type="module" src="js/app.js"></script>
-  <!-- Individual page controllers are imported by js/app.js -->
 
-  <!-- Global backdrop for all sheets -->
-<div id="sheet-backdrop" class="sheet-backdrop hidden"></div>
-
+  <div id="sheet-backdrop" class="sheet-backdrop hidden"></div>
 </body>
 </html>
-
-<!-- iOS home screen -->
-<link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png">
-
-<!-- legacy sizes (optional but harmless) -->
-<link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png">
-<link rel="apple-touch-icon" sizes="120x120" href="/icons/icon-120.png">
-
-<!-- Safari pinned tab (monochrome SVG) -->
-<link rel="mask-icon" href="/icons/icon-mask.svg" color="#0b5cff">
-
-<!-- Web app manifest -->
-<link rel="manifest" href="/manifest.json">
-
-<!-- Make the page behave like an app on iOS -->
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-
-<!-- Theme color for Android / Chrome -->
-<meta name="theme-color" content="#0b5cff">

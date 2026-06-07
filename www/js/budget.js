@@ -1,59 +1,132 @@
-import { get, post } from "./utils/api.js";
+// www/js/budget.js
+// Budget UI with defensive rendering, numeric normalization, guarded progress,
+// debounce for mode toggles, and the existing sheet/emoji UI preserved.
+
+import { get, post, put, del } from "./utils/api.js";
 
 export function initBudget() {
   loadMode();
   loadSummary();
   setupEmojiPicker();
 
-  // Mode toggle
+  // Mode toggle (debounced to avoid repeated heavy work)
   document.querySelectorAll("input[name='budget-mode']").forEach(radio => {
-    radio.addEventListener("change", () => {
-      post("/api/budget/mode", { mode: radio.value });
-      updateAddButtons(radio.value);
-      loadSummary();
-    });
+    radio.addEventListener(
+      "change",
+      debounce(() => {
+        const value = radio.value;
+        // Persist mode to backend (best-effort)
+        post("/api/budget/mode", { mode: value }).catch(err => console.warn("mode save failed", err));
+        updateAddButtons(value);
+        loadSummary();
+      }, 120)
+    );
   });
 
   // Add buttons
-  document.getElementById("add-category-btn").onclick = () =>
-    openSheetModal("Add Category", "category");
-
-  document.getElementById("add-envelope-btn").onclick = () =>
-    openSheetModal("Add Envelope", "envelope");
+  const addCatBtn = document.getElementById("add-category-btn");
+  const addEnvBtn = document.getElementById("add-envelope-btn");
+  if (addCatBtn) addCatBtn.onclick = () => openSheetModal("Add Category", "category");
+  if (addEnvBtn) addEnvBtn.onclick = () => openSheetModal("Add Envelope", "envelope");
 
   // Sheet modal buttons
-  document.getElementById("sheet-modal-save").onclick = saveItem;
-  document.getElementById("sheet-modal-cancel").onclick = closeSheetModal;
+  const saveBtn = document.getElementById("sheet-modal-save");
+  const cancelBtn = document.getElementById("sheet-modal-cancel");
+  if (saveBtn) saveBtn.onclick = saveItem;
+  if (cancelBtn) cancelBtn.onclick = closeSheetModal;
 
-  // ⭐ REQUIRED so transactions update the budget UI
+  // REQUIRED so transactions update the budget UI
   window.refreshBudgetSummary = loadSummary;
 }
 
+/* -----------------------------
+   Helpers: debounce, normalize, percent, currency
+----------------------------- */
+
+function debounce(fn, wait = 120) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), wait);
+  };
+}
+
+function normalizeCategory(c) {
+  return {
+    id: c.id,
+    name: c.name || "",
+    emoji: c.emoji || "❓",
+    limit: Number(c.limit_amount ?? c.limit ?? 0),
+    spent: Number(c.spent ?? 0),
+    user_id: c.user_id
+  };
+}
+
+function normalizeEnvelope(e) {
+  return {
+    id: e.id,
+    name: e.name || "",
+    emoji: e.emoji || "❓",
+    balance: Number(e.balance ?? 0),
+    user_id: e.user_id
+  };
+}
+
+function percentFilled(limit, spent) {
+  const l = Number(limit || 0);
+  const s = Number(spent || 0);
+  if (l <= 0) return 0;
+  return Math.min(100, Math.round((s / l) * 100));
+}
+
+function formatCurrency(n) {
+  const num = Number(n || 0);
+  return num.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 2 });
+}
+
+/* -----------------------------
+   Load mode and summary
+----------------------------- */
+
 async function loadMode() {
-  const data = await get("/api/budget/mode");
-  const radio = document.querySelector(`input[value='${data.mode}']`);
-  if (radio) radio.checked = true;
+  try {
+    const data = await get("/api/budget/mode");
+    const mode = data && data.mode ? data.mode : "simple";
+    const radio = document.querySelector(`input[name='budget-mode'][value='${mode}']`);
+    if (radio) radio.checked = true;
+    updateAddButtons(mode);
+  } catch (err) {
+    console.warn("loadMode failed", err);
+  }
 }
 
 async function loadSummary() {
   const container = document.getElementById("budget-content");
-  if (!container) return; // <-- prevents all null errors
+  if (!container) return;
 
-  const data = await get("/api/budget/summary");
+  let data;
+  try {
+    data = await get("/api/budget/summary");
+  } catch (err) {
+    console.error("Failed to load budget summary", err);
+    container.innerHTML = `<div class="error">Failed to load budget</div>`;
+    return;
+  }
+
   updateAddButtons(data.mode);
 
-  container.innerHTML =
-    data.mode === "simple" ? renderSimple(data) : renderEnvelope(data);
+  // Render using normalized values and guarded calculations
+  container.innerHTML = data.mode === "simple" ? renderSimple(data) : renderEnvelope(data);
 
   attachActions();
 }
 
+/* -----------------------------
+   Update add buttons visibility
+----------------------------- */
 function updateAddButtons(mode) {
   const addCategory = document.getElementById("add-category-btn");
   const addEnvelope = document.getElementById("add-envelope-btn");
-  if (!addCategory || !addEnvelope) return;
-
-  // If we're not on the Budget page, just bail out
   if (!addCategory || !addEnvelope) return;
 
   if (mode === "simple") {
@@ -69,20 +142,21 @@ function updateAddButtons(mode) {
    RENDER SIMPLE
 ----------------------------- */
 function renderSimple(data) {
+  const cats = (data.categories || []).map(normalizeCategory);
   return `
     <div class="simple-budget">
-      ${data.categories
+      ${cats
         .map(
           c => `
         <div class="budget-item" 
              data-id="${c.id}" 
-             data-name="${c.name}" 
+             data-name="${escapeHtml(c.name)}" 
              data-limit="${c.limit}"
-             data-emoji="${c.emoji || ""}">
+             data-emoji="${escapeHtml(c.emoji)}">
           
           <div class="label-row">
-            <div class="icon-box">${c.emoji || "❓"}</div>
-            <div class="label">${c.name}</div>
+            <div class="icon-box">${escapeHtml(c.emoji)}</div>
+            <div class="label">${escapeHtml(c.name)}</div>
 
             <div class="item-actions">
               <button class="edit-btn">Edit</button>
@@ -91,10 +165,10 @@ function renderSimple(data) {
           </div>
 
           <div class="bar">
-            <div class="fill" style="width:${(c.spent / c.limit) * 100}%"></div>
+            <div class="fill" style="width:${percentFilled(c.limit, c.spent)}%"></div>
           </div>
 
-          <div class="numbers">$${c.spent} / $${c.limit}</div>
+          <div class="numbers">${formatCurrency(c.spent)} / ${c.limit > 0 ? formatCurrency(c.limit) : "—"}</div>
         </div>
       `
         )
@@ -107,24 +181,25 @@ function renderSimple(data) {
    RENDER ENVELOPE
 ----------------------------- */
 function renderEnvelope(data) {
+  const envs = (data.envelopes || []).map(normalizeEnvelope);
   return `
     <div class="envelope-budget">
-      ${data.envelopes
+      ${envs
         .map(
           e => `
         <div class="envelope-item" 
              data-id="${e.id}" 
-             data-name="${e.name}" 
+             data-name="${escapeHtml(e.name)}" 
              data-balance="${e.balance}"
-             data-emoji="${e.emoji || ""}">
+             data-emoji="${escapeHtml(e.emoji)}">
           
           <div class="label-row">
-            <div class="icon-box">${e.emoji || "❓"}</div>
-            <div class="label">${e.name}</div>
+            <div class="icon-box">${escapeHtml(e.emoji)}</div>
+            <div class="label">${escapeHtml(e.name)}</div>
           </div>
 
           <div class="right-side">
-            <span class="balance">$${e.balance}</span>
+            <span class="balance">${formatCurrency(e.balance)}</span>
             <div class="item-actions">
               <button class="edit-btn">Edit</button>
               <button class="delete-btn">Delete</button>
@@ -143,18 +218,20 @@ function renderEnvelope(data) {
    ATTACH EDIT/DELETE
 ----------------------------- */
 function attachActions() {
+  // Edit buttons
   document.querySelectorAll(".edit-btn").forEach(btn => {
     btn.onclick = () => {
       const item = btn.closest("[data-id]");
-      const type = item.classList.contains("budget-item")
-        ? "category"
-        : "envelope";
+      if (!item) return;
 
-      const amount = item.dataset.limit ?? item.dataset.balance;
+      const isCategory = item.classList.contains("budget-item");
+      const type = isCategory ? "category" : "envelope";
+
+      const amount = isCategory ? Number(item.dataset.limit || 0) : Number(item.dataset.balance || 0);
       const emoji = item.dataset.emoji || "";
 
       openSheetModal(
-        type === "category" ? "Edit Category" : "Edit Envelope",
+        isCategory ? "Edit Category" : "Edit Envelope",
         type,
         item.dataset.id,
         item.dataset.name,
@@ -164,26 +241,26 @@ function attachActions() {
     };
   });
 
+  // Delete buttons
   document.querySelectorAll(".delete-btn").forEach(btn => {
     btn.onclick = async () => {
       const item = btn.closest("[data-id]");
+      if (!item) return;
       const id = item.dataset.id;
-      const type = item.classList.contains("budget-item")
-        ? "category"
-        : "envelope";
+      const isCategory = item.classList.contains("budget-item");
+      const type = isCategory ? "category" : "envelope";
 
       if (!id) return;
-
       const ok = confirm("Delete this item?");
       if (!ok) return;
 
-      const res = await fetch(`/api/budget/${type}/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        console.error("Delete failed", await res.text());
-        return;
+      try {
+        await del(`/api/budget/${type}/${id}`);
+        await loadSummary();
+      } catch (err) {
+        console.error("Delete failed", err);
+        alert("Delete failed");
       }
-
-      loadSummary();
     };
   });
 }
@@ -193,25 +270,29 @@ function attachActions() {
 ----------------------------- */
 function openSheetModal(title, type, id = "", name = "", amount = "", emoji = "") {
   const sheet = document.getElementById("sheet-modal");
+  if (!sheet) return;
 
   sheet.dataset.type = type;
   sheet.dataset.id = id;
   sheet.dataset.mode = title.startsWith("Add") ? "add" : "edit";
 
-  document.getElementById("sheet-modal-name").value = name;
-  document.getElementById("sheet-modal-amount").value = amount;
-
+  const nameInput = document.getElementById("sheet-modal-name");
+  const amountInput = document.getElementById("sheet-modal-amount");
   const emojiInput = document.getElementById("modal-emoji");
   const emojiPreview = document.getElementById("emoji-preview");
 
-  emojiInput.value = emoji || "";
-  emojiPreview.textContent = emoji || "❓";
+  if (nameInput) nameInput.value = name || "";
+  if (amountInput) amountInput.value = amount !== undefined ? amount : "";
+  if (emojiInput) emojiInput.value = emoji || "";
+  if (emojiPreview) emojiPreview.textContent = emoji || "❓";
 
   openSheet(sheet);
 }
 
 function closeSheetModal() {
-  closeSheet(document.getElementById("sheet-modal"));
+  const sheet = document.getElementById("sheet-modal");
+  if (!sheet) return;
+  closeSheet(sheet);
 }
 
 /* -----------------------------
@@ -221,17 +302,25 @@ let pendingSaveAfterEmoji = false;
 
 async function saveItem() {
   const sheet = document.getElementById("sheet-modal");
+  if (!sheet) return;
+
   const type = sheet.dataset.type;
   const mode = sheet.dataset.mode;
   const id = sheet.dataset.id;
 
-  const name = document.getElementById("sheet-modal-name").value.trim();
-  const amountValue = document.getElementById("sheet-modal-amount").value;
+  const nameEl = document.getElementById("sheet-modal-name");
+  const amountEl = document.getElementById("sheet-modal-amount");
+  const emojiEl = document.getElementById("modal-emoji");
+
+  const name = nameEl ? nameEl.value.trim() : "";
+  const amountValue = amountEl ? amountEl.value : "";
   const amount = Number(amountValue);
+  const emoji = emojiEl ? emojiEl.value.trim() : "";
 
-  const emoji = document.getElementById("modal-emoji").value.trim();
-
-  if (!name || amountValue.trim() === "" || !Number.isFinite(amount)) return;
+  if (!name || amountValue.trim() === "" || !Number.isFinite(amount)) {
+    alert("Please provide a valid name and amount.");
+    return;
+  }
 
   // Require emoji
   if (!emoji) {
@@ -240,30 +329,31 @@ async function saveItem() {
     return;
   }
 
-  if (mode === "add") {
-    const result = await post(`/api/budget/${type}`, {
-      name,
-      emoji,
-      [type === "category" ? "limit" : "balance"]: amount
-    });
-    if (!result || !result.success) {
-      console.error("Save failed", result);
-      return;
-    }
-  } else {
-    const res = await fetch(`/api/budget/${type}/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
+  try {
+    if (mode === "add") {
+      const payload = {
         name,
         emoji,
-        [type === "category" ? "limit" : "balance"]: amount
-      })
-    });
-    if (!res.ok) {
-      console.error("Update failed", await res.text());
-      return;
+        ...(type === "category" ? { limit: amount } : { balance: amount })
+      };
+      const res = await post(`/api/budget/${type}`, payload);
+      if (!res || res.success === false) {
+        console.error("Save failed", res);
+        alert("Save failed");
+        return;
+      }
+    } else {
+      const payload = {
+        name,
+        emoji,
+        ...(type === "category" ? { limit: amount } : { balance: amount })
+      };
+      await put(`/api/budget/${type}/${id}`, payload);
     }
+  } catch (err) {
+    console.error("Save error", err);
+    alert("Save failed");
+    return;
   }
 
   closeSheetModal();
@@ -274,6 +364,7 @@ async function saveItem() {
    BOTTOM SHEET LOGIC
 ----------------------------- */
 function openSheet(sheet) {
+  if (!sheet) return;
   sheet.classList.remove("hidden");
   sheet.classList.add("visible");
 
@@ -285,6 +376,7 @@ function openSheet(sheet) {
 }
 
 function closeSheet(sheet) {
+  if (!sheet) return;
   sheet.classList.remove("visible", "expanded");
 
   const backdrop = document.getElementById("sheet-backdrop");
@@ -426,3 +518,16 @@ style.textContent = `
   }
 `;
 document.head.appendChild(style);
+
+/* -----------------------------
+   Small utilities
+----------------------------- */
+function escapeHtml(str) {
+  if (str === undefined || str === null) return "";
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}

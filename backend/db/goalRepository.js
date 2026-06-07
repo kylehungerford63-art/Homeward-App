@@ -51,8 +51,7 @@ async function updateGoal(id, updates) {
       closing_cost_percent = COALESCE($7, closing_cost_percent),
       moving_cost_fixed = COALESCE($8, moving_cost_fixed),
       extra_savings_target = COALESCE($9, extra_savings_target),
-      buckets = COALESCE($10, buckets),
-      updated_at = NOW()
+      buckets = COALESCE($10, buckets)
     WHERE id = $1
     RETURNING *`,
     [

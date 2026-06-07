@@ -23,10 +23,11 @@ async function updateProfile(user_id, updates) {
     `UPDATE profiles
      SET bio = COALESCE($2, bio),
          avatar_url = COALESCE($3, avatar_url),
+         house_goal_id = COALESCE($4, house_goal_id),
          updated_at = NOW()
      WHERE user_id = $1
      RETURNING *`,
-    [user_id, updates.bio, updates.avatar_url]
+    [user_id, updates.bio, updates.avatar_url, updates.house_goal_id]
   );
   return result.rows[0] || null;
 }

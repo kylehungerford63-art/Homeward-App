@@ -1,3 +1,4 @@
+// backend/db/transactionRepository.js
 const pool = require("./database");
 
 async function getTransactionsByUser(user_id) {
@@ -11,6 +12,27 @@ async function getTransactionsByUser(user_id) {
      WHERE t.user_id = $1
      ORDER BY t.date DESC, t.id DESC`,
     [user_id]
+  );
+  return result.rows;
+}
+
+/**
+ * Fetch transactions for a user constrained to a date range (inclusive).
+ * start and end should be ISO date strings (e.g. "2026-06-01T00:00:00.000Z")
+ */
+async function getTransactionsByUserAndDateRange(user_id, start, end) {
+  const result = await pool.query(
+    `SELECT t.*,
+            c.emoji AS category_emoji,
+            e.emoji AS envelope_emoji
+     FROM transactions t
+     LEFT JOIN categories c ON t.category_id = c.id
+     LEFT JOIN envelopes e ON t.envelope_id = e.id
+     WHERE t.user_id = $1
+       AND t.date >= $2
+       AND t.date <= $3
+     ORDER BY t.date DESC, t.id DESC`,
+    [user_id, start, end]
   );
   return result.rows;
 }
@@ -78,6 +100,7 @@ async function deleteTransaction(user_id, id) {
 
 module.exports = {
   getTransactionsByUser,
+  getTransactionsByUserAndDateRange,
   createTransaction,
   getTransactionById,
   updateTransaction,
